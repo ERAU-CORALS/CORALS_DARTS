@@ -1,0 +1,8 @@
+# Ignore Visual Studio Code Items
+.history
+
+*.code-workspace
+.env
+
+build
+dist
