@@ -8,14 +8,14 @@ from customtkinter import CTk
 
 import numpy as np
 
-def DummyAttitude(App: CTk):
-    loop_time = time.time()
+import DARTS_API as api
 
-    __main__.DARTS_Settings["AttitudeDisplayTime"].append(loop_time - __main__.DARTS_Settings["StartTime"])
-    if __main__.DARTS_Settings["AttitudeDisplayTime"][-1] - __main__.DARTS_Settings["AttitudeDisplayTime"][0] > 10:
-        __main__.DARTS_Settings["AttitudeDisplayTime"].pop(0)
+def DummyAttitude():
+    __main__.DARTS_Settings["Attitude_Plot_TimeData"].append(time.time() - __main__.DARTS_Settings["Attitude_Plot_StartTime"])
+    while __main__.DARTS_Settings["Attitude_Plot_TimeData"][-1] - __main__.DARTS_Settings["Attitude_Plot_TimeData"][0] > api.Attitude_Plot_Get_TimeLength():
+        __main__.DARTS_Settings["Attitude_Plot_TimeData"].pop(0)
 
-    time_data = np.array(__main__.DARTS_Settings["AttitudeDisplayTime"])
+    time_data = np.array(api.Attitude_Plot_Get_TimeData())
 
     q0_data = np.sin(2 * np.pi * time_data / 10)
     q1_data = 2*np.cos(0.5 * np.pi * time_data / 10)
@@ -24,16 +24,16 @@ def DummyAttitude(App: CTk):
 
     q_mag = np.sqrt(q0_data**2 + q1_data**2 + q2_data**2 + q3_data**2)
 
-    __main__.DARTS_Settings["AttitudeDisplayData"][0] = q0_data / q_mag
-    __main__.DARTS_Settings["AttitudeDisplayData"][1] = q1_data / q_mag
-    __main__.DARTS_Settings["AttitudeDisplayData"][2] = q2_data / q_mag
-    __main__.DARTS_Settings["AttitudeDisplayData"][3] = q3_data / q_mag
+    api.Attitude_Plot_Set_QuaternionData([q0_data / q_mag, 
+                                          q1_data / q_mag, 
+                                          q2_data / q_mag, 
+                                          q3_data / q_mag])
 
 def DummyProcess(App: CTk):
     print ("Dummy Process")
     loop_time = time.time()
 
     if not __main__.DARTS_Settings["Halt"]:
-        DummyAttitude(App)
+        DummyAttitude()
 
     App.after(int(time.time() - loop_time + 200), DummyProcess, App)

@@ -3,7 +3,7 @@
 
 import __main__
 
-from customtkinter import (CTk, CTkCheckBox, CTkComboBox, CTkFrame)
+from customtkinter import (CTk, CTkCheckBox, CTkComboBox, CTkFrame, CTkLabel, CTkTextbox, CTkButton)
 
 import matplotlib
 matplotlib.use("TkAgg")
@@ -15,9 +15,20 @@ import time
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 
+import DARTS_API as api
+import DARTS_Utilities as util
+
 class AttitudeFrame(CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
+
+        __main__.DARTS_Settings.register("Attitude_Current", [1, 0, 0, 0])
+
+        __main__.DARTS_Settings.register("Attitude_Plot_StartTime", time.time())
+        __main__.DARTS_Settings.register("Attitude_Plot_TimeLength", 10)
+        __main__.DARTS_Settings.register("Attitude_Plot_TimeData", [])
+        __main__.DARTS_Settings.register("Attitude_Plot_QuaternionData")
+        __main__.DARTS_Settings.register("Attitude_Plot_DisplayType", "Quaternion", ["RPY Angles", "Euler Parameters", "Gibbs-Rodriguez", "Quaternion"])
 
         self.AttitudeRenderingFrame = AttitudeRenderingFrame(self)
         self.GraphSettingsFrame = AttitudeGraphSettingsFrame(self)
@@ -115,130 +126,153 @@ class AttitudeTimeGraphFrame(CTkFrame):
         self.draw_data_callback()
 
     def draw_data_callback(self):   
-        print ("Drawing Data")     
         self.Axes.clear()
         self.AltAxes.clear()
-        time_data = __main__.DARTS_Settings["AttitudeDisplayTime"]
+
+        time_data = api.Attitude_Plot_Get_TimeData()
+
+        print ("Draw Data Callback")
 
         if len(time_data) >= 2:
 
             self.Axes.set_xlim(time_data[0], time_data[-1])
             self.AltAxes.set_xlim(time_data[0], time_data[-1])
-
-            q0_data = __main__.DARTS_Settings["AttitudeDisplayData"][0]
-            q1_data = __main__.DARTS_Settings["AttitudeDisplayData"][1]
-            q2_data = __main__.DARTS_Settings["AttitudeDisplayData"][2]
-            q3_data = __main__.DARTS_Settings["AttitudeDisplayData"][3]
-
-            if self.Settings.DisplayTypeSelect.get() != "Quaternion":
-                phi_data = 2*np.arccos(q0_data)
-
-                qhat_mag = np.sqrt(q1_data**2 + q2_data**2 + q3_data**2)
-                e1_data = q1_data / qhat_mag
-                e2_data = q2_data / qhat_mag
-                e3_data = q3_data / qhat_mag
             
-            if self.Settings.DisplayTypeSelect.get() == "RPY Angles":
+            if util.AttitudePlot_IsRPYAngles():
+
+                [roll_data, pitch_data, yaw_data] = util.Convert_Quaternion_to_RPY(api.Attitude_Plot_Get_QuaternionData())
+                legend_entries = []
                 
                 if self.Settings.RollCheckbox.get():
-                    roll_data = np.arctan2(2*(q0_data*q1_data + q2_data*q3_data), 1 - 2*(q1_data**2 + q2_data**2))
-                    if __main__.DARTS_Settings["AngleType"] == "Degrees":
+                    if util.AngleType_IsDegrees():
                         roll_data = np.degrees(roll_data)
                     self.Axes.plot(time_data, roll_data.tolist(), color="red")
+                    legend_entries.append("Roll")
                 
                 if self.Settings.PitchCheckbox.get():
-                    pitch_data = np.arcsin(2*(q0_data*q2_data - q3_data*q1_data))
-                    if __main__.DARTS_Settings["AngleType"] == "Degrees":
+                    if util.AngleType_IsDegrees():
                         pitch_data = np.degrees(pitch_data)
                     self.Axes.plot(time_data, pitch_data.tolist(), color="green")
+                    legend_entries.append("Pitch")
                 
                 if self.Settings.YawCheckbox.get():
-                    yaw_data = np.arctan2(2*(q0_data*q3_data + q1_data*q2_data), 1 - 2*(q2_data**2 + q3_data**2))
-                    if __main__.DARTS_Settings["AngleType"] == "Degrees":
+                    if util.AngleType_IsDegrees():
                         yaw_data = np.degrees(yaw_data)
                     self.Axes.plot(time_data, yaw_data.tolist(), color="blue")
+                    legend_entries.append("Yaw")
 
-                self.Axes.legend(["Roll", "Pitch", "Yaw"], loc='upper left')
-                if __main__.DARTS_Settings["AngleType"] == "Degrees":
+                self.Axes.legend(legend_entries, loc='upper left')
+
+                if util.AngleType_IsDegrees():
                     self.Axes.set_ylim(-180, 180) 
                     self.Axes.set_yticks([-180, -90, 0, 90, 180])
+                    self.Axes.set_yticklabels(["-180°", "-90°", "0°", "90°", "180°"])
                 else:
                     self.Axes.set_ylim(-np.pi, np.pi) 
                     self.Axes.set_yticks([-np.pi, -np.pi/2, 0, np.pi/2, np.pi])
-                self.Axes.set_ylabel("Angle (deg)")
+                    self.Axes.set_yticklabels(["-π", "-π/2", "0", "π/2", "π"])
+                self.Axes.set_ylabel("Angle")
                 
                 self.AltAxes.set_ylabel("")
                 self.AltAxes.set_yticks([])
                 self.AltAxes.set_ylabel("")
                 
-                
-            elif self.Settings.DisplayTypeSelect.get() == "Euler Parameters":
+            elif util.AttitudePlot_IsEulerParameters():
+
+                euler_data = util.Convert_Quaternion_to_Euler(api.Attitude_Plot_Get_QuaternionData())
+                [e1_data, e2_data, e3_data] = euler_data["parameter"]
+                phi_data = euler_data["angle"]
+                legend_entries = []
 
                 if self.Settings.E1Checkbox.get():
                     self.Axes.plot(time_data, e1_data.tolist(), color="red")
+                    legend_entries.append("E1")
                 
                 if self.Settings.E2Checkbox.get():
                     self.Axes.plot(time_data, e2_data.tolist(), color="green")
+                    legend_entries.append("E2")
                 
                 if self.Settings.E3Checkbox.get():
                     self.Axes.plot(time_data, e3_data.tolist(), color="blue")
-                
-                if self.Settings.PhiCheckbox.get():
-                    if __main__.DARTS_Settings["AngleType"] == "Degrees":
-                        phi_data = np.degrees(phi_data)
-                    self.AltAxes.plot(time_data, phi_data.tolist(), color="cyan")
+                    legend_entries.append("E3")
 
-                self.Axes.legend(["E1", "E2", "E3"], loc='upper left')
+                self.Axes.legend(legend_entries, loc='upper left')
                 self.Axes.set_ylim(-1, 1)
                 self.Axes.set_yticks([-1, -0.5, 0, 0.5, 1])
                 self.Axes.set_ylabel("Euler Parameter")
                 
-                self.AltAxes.legend(["Phi"], loc='upper right')
-                if __main__.DARTS_Settings["AngleType"] == "Degrees":
-                    self.AltAxes.set_ylim(0, 360)
-                    self.AltAxes.set_yticks([0, 90, 180, 270, 360])
-                else:
-                    self.AltAxes.set_ylim(0, 2*np.pi)
-                    self.AltAxes.set_yticks([0, np.pi/2, np.pi, 3*np.pi/2, 2*np.pi])
-                self.AltAxes.set_ylabel("Euler Angle", color='cyan')
-                self.AltAxes.get_yaxis().set_label_position("right")
+                if self.Settings.PhiCheckbox.get():
+                    if util.AngleType_IsDegrees():
+                        phi_data = np.degrees(phi_data)
+                    self.AltAxes.plot(time_data, phi_data.tolist(), color="cyan")
                 
-            elif self.Settings.DisplayTypeSelect.get() == "Gibbs-Rodriguez":
+                    self.AltAxes.legend(["Phi"], loc='upper right')
+                    if util.AngleType_IsDegrees():
+                        self.AltAxes.set_ylim(0, 360)
+                        self.AltAxes.set_yticks([0, 90, 180, 270, 360])
+                        self.AltAxes.set_yticklabels(["0°", "90°", "180°", "270°", "360°"])
+                    else:
+                        self.AltAxes.set_ylim(0, 2*np.pi)
+                        self.AltAxes.set_yticks([0, np.pi/2, np.pi, 3*np.pi/2, 2*np.pi])
+                        self.AltAxes.set_yticklabels(["0", "π/2", "π", "3π/2", "2π"])
+                    self.AltAxes.set_ylabel("Euler Angle", color='cyan')
+                    self.AltAxes.get_yaxis().set_label_position("right")
+
+                else:
+                    self.AltAxes.set_ylabel("")
+                    self.AltAxes.set_yticks([])
+                    self.AltAxes.set_ylabel("")
+                
+            elif util.AttitudePlot_IsGibbsRodriguez():
+
+                [p1_data, p2_data, p3_data] = util.Convert_Quaternion_to_Gibbs(api.Attitude_Plot_Get_QuaternionData())
+                legend_entries = []
 
                 if self.Settings.P1Checkbox.get():
-                    p1_data = e1_data*np.tan(phi_data/2)
                     self.Axes.plot(time_data, p1_data.tolist(), color="red")
+                    legend_entries.append("P1")
                 
                 if self.Settings.P2Checkbox.get():
-                    p2_data = e2_data*np.tan(phi_data/2)
                     self.Axes.plot(time_data, p2_data.tolist(), color="green")
+                    legend_entries.append("P2")
                 
                 if self.Settings.P3Checkbox.get():
-                    p3_data = e3_data*np.tan(phi_data/2)
                     self.Axes.plot(time_data, p3_data.tolist(), color="blue")
+                    legend_entries.append("P3")
                 
-                self.Axes.legend(["P1", "P2", "P3"], loc='upper left')
+                self.Axes.legend(legend_entries, loc='upper left')
                 self.Axes.set_ylabel("GR Parameter")
                 
                 self.AltAxes.set_ylabel("")
                 self.AltAxes.set_yticks([])
                 self.AltAxes.set_ylabel("")
                 
-            elif self.Settings.DisplayTypeSelect.get() == "Quaternion":
+            elif util.AttitudePlot_IsQuaternion():
 
-                if self.Settings.Q0Checkbox.get():
-                    self.Axes.plot(time_data, q0_data.tolist(), color="red")
+                [q0_data, q1_data, q2_data, q3_data] = api.Attitude_Plot_Get_QuaternionData()
+                legend_entries = []
+
+                if self.Settings.Q0Checkbox.get() and api.Settings_Get_QuaternionType() == "Q0":
+                    self.Axes.plot(time_data, q0_data.tolist(), color="cyan")
+                    legend_entries.append("Q0")
                 
                 if self.Settings.Q1Checkbox.get():
-                    self.Axes.plot(time_data, q1_data.tolist(), color="green")
+                    self.Axes.plot(time_data, q1_data.tolist(), color="red")
+                    legend_entries.append("Q1")
                 
                 if self.Settings.Q2Checkbox.get():
-                    self.Axes.plot(time_data, q2_data.tolist(), color="blue")
+                    self.Axes.plot(time_data, q2_data.tolist(), color="green")
+                    legend_entries.append("Q2")
                 
                 if self.Settings.Q3Checkbox.get():
-                    self.Axes.plot(time_data, q3_data.tolist(), color="black")
+                    self.Axes.plot(time_data, q3_data.tolist(), color="blue")
+                    legend_entries.append("Q3")
 
-                self.Axes.legend(["Q0", "Q1", "Q2", "Q3"], loc='upper left')
+                if self.Settings.Q4Checkbox.get() and api.Settings_Get_QuaternionType() == "Q4":
+                    self.Axes.plot(time_data, q0_data.tolist(), color="cyan")
+                    legend_entries.append("Q4")
+
+                self.Axes.legend(legend_entries, loc='upper left')
                 self.Axes.set_ylim(-1, 1)
                 self.Axes.set_yticks([-1, -0.5, 0, 0.5, 1])
                 self.Axes.set_ylabel("Quaternion")
@@ -249,47 +283,57 @@ class AttitudeTimeGraphFrame(CTkFrame):
 
             self.Canvas.draw()
 
+        self.Settings.update_displayed_fields()
+
         self.after(1000, self.draw_data_callback)
 
 class AttitudeGraphSettingsFrame(CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
 
-        self.RollCheckbox = CTkCheckBox(self, text="Roll")
-        self.PitchCheckbox = CTkCheckBox(self, text="Pitch")
-        self.YawCheckbox = CTkCheckBox(self, text="Yaw")
+        self.LeftFrame = CTkFrame(self)
+        self.RightFrame = CTkFrame(self)
+
+        self.LeftFrame.grid(row=0, column=0, sticky="nsew")
+        self.RightFrame.grid(row=0, column=1, sticky="nsew")
+
+        self.RollCheckbox = CTkCheckBox(self.RightFrame, text="Roll")
+        self.PitchCheckbox = CTkCheckBox(self.RightFrame, text="Pitch")
+        self.YawCheckbox = CTkCheckBox(self.RightFrame, text="Yaw")
 
         self.EulerAngleCheckboxes = [self.RollCheckbox, 
                                      self.PitchCheckbox, 
                                      self.YawCheckbox]
 
-        self.E1Checkbox = CTkCheckBox(self, text="E1")
-        self.E2Checkbox = CTkCheckBox(self, text="E2")
-        self.E3Checkbox = CTkCheckBox(self, text="E3")
-        self.PhiCheckbox = CTkCheckBox(self, text="Phi")
+        self.E1Checkbox = CTkCheckBox(self.RightFrame, text="E1")
+        self.E2Checkbox = CTkCheckBox(self.RightFrame, text="E2")
+        self.E3Checkbox = CTkCheckBox(self.RightFrame, text="E3")
+        self.PhiCheckbox = CTkCheckBox(self.RightFrame, text="Phi")
 
         self.EulerParameterCheckboxes = [self.E1Checkbox,
                                          self.E2Checkbox,
                                          self.E3Checkbox,
                                          self.PhiCheckbox]
 
-        self.P1Checkbox = CTkCheckBox(self, text="P1")
-        self.P2Checkbox = CTkCheckBox(self, text="P2")
-        self.P3Checkbox = CTkCheckBox(self, text="P3")
+        self.P1Checkbox = CTkCheckBox(self.RightFrame, text="P1")
+        self.P2Checkbox = CTkCheckBox(self.RightFrame, text="P2")
+        self.P3Checkbox = CTkCheckBox(self.RightFrame, text="P3")
 
         self.GibbsRodriguezCheckboxes = [self.P1Checkbox,
                                          self.P2Checkbox,
                                          self.P3Checkbox]
 
-        self.Q0Checkbox = CTkCheckBox(self, text="Q0")
-        self.Q1Checkbox = CTkCheckBox(self, text="Q1")
-        self.Q2Checkbox = CTkCheckBox(self, text="Q2")
-        self.Q3Checkbox = CTkCheckBox(self, text="Q3")
+        self.Q0Checkbox = CTkCheckBox(self.RightFrame, text="Q0")
+        self.Q1Checkbox = CTkCheckBox(self.RightFrame, text="Q1")
+        self.Q2Checkbox = CTkCheckBox(self.RightFrame, text="Q2")
+        self.Q3Checkbox = CTkCheckBox(self.RightFrame, text="Q3")
+        self.Q4Checkbox = CTkCheckBox(self.RightFrame, text="Q4")
 
         self.QuaternionCheckboxes = [self.Q0Checkbox,
                                      self.Q1Checkbox,
                                      self.Q2Checkbox,
-                                     self.Q3Checkbox]
+                                     self.Q3Checkbox,
+                                     self.Q4Checkbox]
         
         self.Checkboxes = self.EulerAngleCheckboxes \
                         + self.EulerParameterCheckboxes \
@@ -299,36 +343,50 @@ class AttitudeGraphSettingsFrame(CTkFrame):
         for Checkbox in self.Checkboxes:
             Checkbox.select()
 
-        self.DisplayTypeSelect = CTkComboBox(self, 
+        self.DisplayTypeLabel = CTkLabel(self.LeftFrame, text="Display Type:", justify="left")
+        self.DisplayTypeSelect = CTkComboBox(self.LeftFrame, 
                                              values=["RPY Angles", 
                                                      "Euler Parameters", 
                                                      "Gibbs-Rodriguez", 
                                                      "Quaternion"],
                                              command=self.display_type_callback)
         
+        self.DisplayTypeLabel.pack()
         self.DisplayTypeSelect.pack()
-        self.DisplayTypeSelect.set(__main__.DARTS_Settings["AttitudeDisplayType"])
+        self.DisplayTypeSelect.set(api.Attitude_Plot_Get_DisplayType())
+
+        self.TimespanLabel = CTkLabel(self.LeftFrame, text="Timespan (s):", justify="left")
+        self.TimespanEntry = CTkTextbox(self.LeftFrame)
+        self.TimespanUpdateButton = CTkButton(self.LeftFrame, text="Update", command=self.timespan_button_callback)
+
+        self.TimespanLabel.pack()
+        self.TimespanEntry.pack()
+        self.TimespanUpdateButton.pack()
+        self.TimespanEntry.insert("0.0", api.Attitude_Plot_Get_TimeLength())
         
-        self.display_type_callback(__main__.DARTS_Settings["AttitudeDisplayType"])
+        self.display_type_callback(api.Attitude_Plot_Get_DisplayType())
         
     def display_type_callback(self, selection):
-        __main__.DARTS_Settings["AttitudeDisplayType"] = selection
+        api.Attitude_Plot_Set_DisplayType(selection)
+        self.update_displayed_fields()
 
-        if selection == "RPY Angles":
+    def update_displayed_fields(self):
+        if util.AttitudePlot_IsRPYAngles():
             VisibleCheckboxes = self.EulerAngleCheckboxes
-        elif selection == "Euler Parameters":
+        elif util.AttitudePlot_IsEulerParameters():
             VisibleCheckboxes = self.EulerParameterCheckboxes
-        elif selection == "Gibbs-Rodriguez":
+        elif util.AttitudePlot_IsGibbsRodriguez():
             VisibleCheckboxes = self.GibbsRodriguezCheckboxes
-        elif selection == "Quaternion":
-            VisibleCheckboxes = self.QuaternionCheckboxes
-        else:
-            raise ValueError("Invalid selection: " + selection)
+        elif util.AttitudePlot_IsQuaternion():
+            VisibleCheckboxes = [Checkbox for Checkbox in self.QuaternionCheckboxes \
+                                 if Checkbox is not {"Q0": self.Q4Checkbox, "Q4": self.Q0Checkbox}[api.Settings_Get_QuaternionType()]]
         
         for checkbox in self.Checkboxes:
+            checkbox.pack_forget()
             if checkbox in VisibleCheckboxes:
                 checkbox.pack()
-            else:
-                checkbox.pack_forget()
+
+    def timespan_button_callback(self):
+        api.Attitude_Plot_Set_TimeLength(float(self.TimespanEntry.get("0.0", "end")))
 
 

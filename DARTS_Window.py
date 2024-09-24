@@ -4,7 +4,7 @@
 import __main__
 import time
 
-from customtkinter import (CTk, CTkFrame, CTkTabview, CTkButton, CTkFont, CTkComboBox)
+from customtkinter import (CTk, CTkFrame, CTkTabview, CTkButton, CTkFont, CTkComboBox, CTkLabel)
 
 from DARTS_Attitude import AttitudeFrame
 from DARTS_Targets import TargetsFrame
@@ -13,9 +13,17 @@ from DARTS_Telemetry import TelemetryFrame
 from DARTS_Settings import SettingsFrame
 from DARTS_Debug import DebugFrame
 
+import DARTS_API as api
+import DARTS_Utilities as util
+
 class Window(CTk):
     def __init__(self):
         super().__init__()
+
+        __main__.DARTS_Settings.register("Settings_Halt", True, [True, False])
+        __main__.DARTS_Settings.register("Settings_AngleType", "Degrees", ["Degrees", "Radians"])
+        __main__.DARTS_Settings.register("Settings_QuaternionType", "Q4", ["Q0", "Q4"])
+        __main__.DARTS_Settings.register("Settings_PlotDuration")
 
         self.title("DARTS - Data Acquisition and Remote Telecommand Script")
         self.geometry("1024x768")
@@ -71,16 +79,32 @@ class SideFrame(CTkFrame):
         self.StartButton.pack()
         self.HaltButton.pack()
 
+        self.Q0Text = "[Q0, Q1, Q2, Q3]"
+        self.Q4Text = "[Q1, Q2, Q3, Q4]"
+
+        self.AngleLabel = CTkLabel(self, text="Angle Representation:", justify="left")
         self.AngleComboBox = CTkComboBox(self, values=["Degrees", "Radians"], command=self.AngleRepresentation_Callback)
+        self.AngleLabel.pack()
         self.AngleComboBox.pack()
+
+        self.AngleComboBox.set(api.Settings_Get_AngleType())
+        
+        self.QuaternionLabel = CTkLabel(self, text="Quaternion Representation:", justify="left")
+        self.QuaternionComboBox = CTkComboBox(self, values=[self.Q0Text, self.Q4Text], command=self.QuaternionRepresentation_Callback)
+        self.QuaternionLabel.pack()
+        self.QuaternionComboBox.pack()
+
+        self.QuaternionComboBox.set({"Q0": self.Q0Text, "Q4": self.Q4Text}[api.Settings_Get_QuaternionType()])
+        
     
     def StartButton_Callback(self):
-        __main__.DARTS_Settings["Halt"] = False
-        __main__.DARTS_Settings["StartTime"] = time.time()
-        __main__.DARTS_Settings["AttitudeDisplayTime"] = []
+        util.StartTestbed()
     
     def HaltButton_Callback(self):
-        __main__.DARTS_Settings["Halt"] = True
+        util.StopTestbed()
 
     def AngleRepresentation_Callback(self, setting):
-        __main__.DARTS_Settings["AngleType"] = setting
+        api.Settings_Set_AngleType(setting)
+
+    def QuaternionRepresentation_Callback(self, setting):
+        api.Settings_Set_QuaternionType({self.Q0Text: "Q0", self.Q4Text: "Q4"}[setting])
