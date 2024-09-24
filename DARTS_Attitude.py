@@ -34,9 +34,9 @@ class AttitudeFrame(CTkFrame):
         self.GraphSettingsFrame = AttitudeGraphSettingsFrame(self)
         self.TimeGraphFrame = AttitudeTimeGraphFrame(self, self.GraphSettingsFrame)
 
-        self.AttitudeRenderingFrame.grid(row=0, column=0, sticky="nsew")
-        self.TimeGraphFrame.grid(row=0, column=1, sticky="nsew")
-        self.GraphSettingsFrame.grid(row=1, column=0, columnspan=2, sticky="nsew")
+        self.AttitudeRenderingFrame.place(relx=0, rely=0, relwidth=0.5, relheight=0.75, anchor="nw")
+        self.TimeGraphFrame.place(relx=1, rely=0, relwidth=0.5, relheight=0.75, anchor="ne")
+        self.GraphSettingsFrame.place(relx=0.5, rely=1, relwidth=0.5, relheight=0.25, anchor="sw")
 
 class AttitudeRenderingFrame(CTkFrame):
     def __init__(self, master, **kwargs):
@@ -104,7 +104,7 @@ class AttitudeRenderingFrame(CTkFrame):
 
         self.Canvas = FigureCanvasTkAgg(self.Figure, self)
         self.Canvas.draw()
-        self.Canvas.get_tk_widget().pack()
+        self.Canvas.get_tk_widget().place(relx=0, rely=0, relwidth=1, relheight=1, anchor="nw")
 
 class AttitudeTimeGraphFrame(CTkFrame):
     def __init__(self, master, settings, **kwargs):
@@ -121,7 +121,7 @@ class AttitudeTimeGraphFrame(CTkFrame):
 
         self.Canvas = FigureCanvasTkAgg(self.Figure, self)
         self.Canvas.draw()
-        self.Canvas.get_tk_widget().pack()
+        self.Canvas.get_tk_widget().place(relx=0, rely=0, relwidth=1, relheight=1, anchor="nw")
 
         self.draw_data_callback()
 
@@ -294,8 +294,8 @@ class AttitudeGraphSettingsFrame(CTkFrame):
         self.LeftFrame = CTkFrame(self)
         self.RightFrame = CTkFrame(self)
 
-        self.LeftFrame.grid(row=0, column=0, sticky="nsew")
-        self.RightFrame.grid(row=0, column=1, sticky="nsew")
+        self.LeftFrame.place(relx=0, rely=0, relwidth=0.5, relheight=1, anchor="nw")
+        self.RightFrame.place(relx=1, rely=0, relwidth=0.5, relheight=1, anchor="ne")
 
         self.RollCheckbox = CTkCheckBox(self.RightFrame, text="Roll")
         self.PitchCheckbox = CTkCheckBox(self.RightFrame, text="Pitch")
@@ -351,17 +351,17 @@ class AttitudeGraphSettingsFrame(CTkFrame):
                                                      "Quaternion"],
                                              command=self.display_type_callback)
         
-        self.DisplayTypeLabel.pack()
-        self.DisplayTypeSelect.pack()
+        self.DisplayTypeLabel.pack(anchor="w")
+        self.DisplayTypeSelect.pack(anchor="w")
         self.DisplayTypeSelect.set(api.Attitude_Plot_Get_DisplayType())
 
         self.TimespanLabel = CTkLabel(self.LeftFrame, text="Timespan (s):", justify="left")
-        self.TimespanEntry = CTkTextbox(self.LeftFrame)
+        self.TimespanEntry = CTkTextbox(self.LeftFrame, height=12)
         self.TimespanUpdateButton = CTkButton(self.LeftFrame, text="Update", command=self.timespan_button_callback)
 
-        self.TimespanLabel.pack()
-        self.TimespanEntry.pack()
-        self.TimespanUpdateButton.pack()
+        self.TimespanLabel.pack(anchor="w")
+        self.TimespanEntry.pack(anchor="w")
+        self.TimespanUpdateButton.pack(anchor="w")
         self.TimespanEntry.insert("0.0", api.Attitude_Plot_Get_TimeLength())
         
         self.display_type_callback(api.Attitude_Plot_Get_DisplayType())

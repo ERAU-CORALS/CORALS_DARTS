@@ -27,5 +27,6 @@ if __name__ == '__main__':
     load_dotenv()
 
     App = App()
+    
     Main(App)
     App.mainloop()
