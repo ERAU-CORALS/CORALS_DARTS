@@ -10,7 +10,13 @@ import numpy as np
 
 import DARTS_API as api
 
+def _Process_Print(value:str) -> None:
+    if __main__.DEBUG_PROCESS:
+        print(f"Process: {value}")
+
 def DummyAttitude():
+    _Process_Print("Dummy Attitude")
+    
     __main__.DARTS_Settings["Attitude_Plot_TimeData"].append(time.time() - __main__.DARTS_Settings["Attitude_Plot_StartTime"])
     while __main__.DARTS_Settings["Attitude_Plot_TimeData"][-1] - __main__.DARTS_Settings["Attitude_Plot_TimeData"][0] > api.Attitude_Plot_Get_TimeLength():
         __main__.DARTS_Settings["Attitude_Plot_TimeData"].pop(0)
@@ -30,7 +36,7 @@ def DummyAttitude():
                                           q3_data / q_mag])
 
 def DummyProcess(App: CTk):
-    print ("Dummy Process")
+    _Process_Print ("Dummy Process")
     loop_time = time.time()
 
     if not __main__.DARTS_Settings["Halt"]:

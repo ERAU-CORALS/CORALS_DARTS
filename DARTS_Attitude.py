@@ -2,6 +2,7 @@
 # The attitude reporting tab for the DARTS Application.
 
 import __main__
+import time
 
 from customtkinter import (CTk, CTkCheckBox, CTkComboBox, CTkFrame, CTkLabel, CTkTextbox, CTkButton)
 
@@ -9,17 +10,21 @@ import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
-from matplotlib.pyplot import tight_layout
 
-import time
 import numpy as np
-from scipy.spatial.transform import Rotation as R
 
 import DARTS_API as api
 import DARTS_Utilities as util
+from DARTS_Render import DARTS_RenderingFrame
+
+def _Attitude_Print(value:str) -> None:
+    if __main__.DEBUG_ATTITUDE_PAGE:
+        print(f"Attitude Page: {value}")
 
 class AttitudeFrame(CTkFrame):
     def __init__(self, master, **kwargs):
+        _Attitude_Print("Initializing Attitude Frame")
+
         super().__init__(master, **kwargs)
 
         __main__.DARTS_Settings.register("Attitude_Current", [1, 0, 0, 0])
@@ -30,84 +35,29 @@ class AttitudeFrame(CTkFrame):
         __main__.DARTS_Settings.register("Attitude_Plot_QuaternionData")
         __main__.DARTS_Settings.register("Attitude_Plot_DisplayType", "Quaternion", ["RPY Angles", "Euler Parameters", "Gibbs-Rodriguez", "Quaternion"])
 
-        self.AttitudeRenderingFrame = AttitudeRenderingFrame(self)
         self.GraphSettingsFrame = AttitudeGraphSettingsFrame(self)
+        self.AttitudeRenderingFrame = AttitudeRenderingFrame(self)
         self.TimeGraphFrame = AttitudeTimeGraphFrame(self, self.GraphSettingsFrame)
 
         self.AttitudeRenderingFrame.place(relx=0, rely=0, relwidth=0.5, relheight=0.75, anchor="nw")
         self.TimeGraphFrame.place(relx=1, rely=0, relwidth=0.5, relheight=0.75, anchor="ne")
-        self.GraphSettingsFrame.place(relx=0.5, rely=1, relwidth=0.5, relheight=0.25, anchor="sw")
+        self.GraphSettingsFrame.place(relx=1, rely=1, relwidth=0.5, relheight=0.25, anchor="se")
 
-class AttitudeRenderingFrame(CTkFrame):
+class AttitudeRenderingFrame(DARTS_RenderingFrame):
     def __init__(self, master, **kwargs):
+        _Attitude_Print("Initializing Attitude Rendering Frame")
+
         super().__init__(master, **kwargs)
 
-        self.Figure = Figure(figsize=(5, 5), dpi=100)
-        self.Axes   = self.Figure.add_subplot(111, projection="3d")
-        self.Axes.set_xlim(-1, 1)
-        self.Axes.set_ylim(-1, 1)
-        self.Axes.set_zlim(-1, 1)
-        self.Axes.set_xticks([-1, 1])
-        self.Axes.set_yticks([-1, 1])
-        self.Axes.set_zticks([-1, 1])
-        self.Axes.view_init(elev=30, azim=30)
-        self.Axes.set_aspect("equal")
-        
-        # self.Vectors = np.array([[0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 1]])
-        # self.VectorsX, self.VectorsY, self.VectorsZ, self.VectorsU, self.VectorsV, self.VectorsW = zip(*self.Vectors)
+        self.plot_axes()
 
-        # self.Axes.quiver(self.VectorsX, self.VectorsY, self.VectorsZ, self.VectorsU, self.VectorsV, self.VectorsW, color=["r", "g", "b"])
-
-        
-        def define_vector(apex=None, 
-                        start=[0,0,0], 
-                        rotAngles=[0,45,0], 
-                        length=1.0, 
-                        tipHeight=None,
-                        tipWidth=None,
-                        heightRatio = 0.2,
-                        widthRatio = 0.05):
-            r = R.from_euler("xyz", rotAngles, degrees=True)
-            
-            def f(x, y, height):
-                return np.sqrt(x ** 2 + y ** 2) *-1.0*height
-            
-            if apex is not None:
-                if tipHeight is None:
-                    tipHeight = np.sqrt(apex * 1.0) * heightRatio * apex / abs(apex)
-                if tipWidth is None:
-                    tipWidth = np.sqrt(apex * 1.0) * widthRatio;
-
-                u1, v1 = np.mgrid[0:2*np.pi:100j, 0:np.pi:100j]
-                x1 = np.cos(u1) * np.sin(v1)
-                y1 = np.sin(u1) * np.sin(v1)
-                z1 = f(x1, y1, tipHeight) + apex
-
-                x1 *= tipWidth
-                y1 *= tipWidth
-
-                vals = np.dot(np.dstack((x1, y1, z1)), r.as_matrix().T)
-                vals2 = np.dot(np.array([[0,0,0], [0,0,1]]), r.as_matrix().T)
-
-            return vals,vals2
-        
-        def plot_vector(axes, origin=[0,0,0], angles=[0,0,0], length=1.0, **kwargs):
-            covals, rovals = define_vector(1, origin, angles, length)
-            axes.plot_surface(covals[:,:,0], covals[:,:,1], covals[:,:,2], zorder=3, **kwargs)
-            axes.plot3D(rovals[:,0]*.9, rovals[:,1]*.9, rovals[:,2]*.9, zorder=2, **kwargs)
-
-        plot_vector(self.Axes, [0,0,0], [0,90,0], 1.0, color="r")
-        plot_vector(self.Axes, [0,0,0], [-90,0,0], 1.0, color="g")
-        plot_vector(self.Axes, [0,0,0], [0,0,0], 1.0, color="b")
-        
-        # self.Axes.legend(["Roll",,"Pitch", "Yaw"])
-
-        self.Canvas = FigureCanvasTkAgg(self.Figure, self)
         self.Canvas.draw()
         self.Canvas.get_tk_widget().place(relx=0, rely=0, relwidth=1, relheight=1, anchor="nw")
 
 class AttitudeTimeGraphFrame(CTkFrame):
     def __init__(self, master, settings, **kwargs):
+        _Attitude_Print("Initializing Attitude Time Graph Frame")
+
         super().__init__(master, **kwargs)
 
         self.Settings = settings
@@ -115,7 +65,6 @@ class AttitudeTimeGraphFrame(CTkFrame):
         self.Figure = Figure(figsize=(5, 5), dpi=100)
         self.Axes   = self.Figure.add_subplot(111)
         self.AltAxes = self.Axes.twinx()
-        # tight_layout()
         
         self.start_time = time.time()
 
@@ -123,15 +72,15 @@ class AttitudeTimeGraphFrame(CTkFrame):
         self.Canvas.draw()
         self.Canvas.get_tk_widget().place(relx=0, rely=0, relwidth=1, relheight=1, anchor="nw")
 
-        self.draw_data_callback()
+        self.draw_data_process()
 
-    def draw_data_callback(self):   
+    def draw_data_process(self):   
+        _Attitude_Print("Drawing Data Callback")
+
         self.Axes.clear()
         self.AltAxes.clear()
 
         time_data = api.Attitude_Plot_Get_TimeData()
-
-        print ("Draw Data Callback")
 
         if len(time_data) >= 2:
 
@@ -285,10 +234,12 @@ class AttitudeTimeGraphFrame(CTkFrame):
 
         self.Settings.update_displayed_fields()
 
-        self.after(1000, self.draw_data_callback)
+        self.after(200, self.draw_data_process)
 
 class AttitudeGraphSettingsFrame(CTkFrame):
     def __init__(self, master, **kwargs):
+        _Attitude_Print("Initializing Attitude Graph Settings Frame")
+
         super().__init__(master, **kwargs)
 
         self.LeftFrame = CTkFrame(self)
@@ -367,10 +318,14 @@ class AttitudeGraphSettingsFrame(CTkFrame):
         self.display_type_callback(api.Attitude_Plot_Get_DisplayType())
         
     def display_type_callback(self, selection):
+        _Attitude_Print(f"Display Type Callback: {selection}")
+
         api.Attitude_Plot_Set_DisplayType(selection)
         self.update_displayed_fields()
 
     def update_displayed_fields(self):
+        _Attitude_Print("Updating Displayed Fields")
+
         if util.AttitudePlot_IsRPYAngles():
             VisibleCheckboxes = self.EulerAngleCheckboxes
         elif util.AttitudePlot_IsEulerParameters():
@@ -387,6 +342,8 @@ class AttitudeGraphSettingsFrame(CTkFrame):
                 checkbox.pack()
 
     def timespan_button_callback(self):
+        _Attitude_Print("Timespan Button Callback")
+
         api.Attitude_Plot_Set_TimeLength(float(self.TimespanEntry.get("0.0", "end")))
 
 

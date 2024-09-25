@@ -71,3 +71,15 @@ def Convert_Quaternion_to_Gibbs(quaternion_data:list[np.array]) -> list[np.array
     # Convert Quaternion to Gibbs-Rodriguez Parameters
     euler_data = Convert_Quaternion_to_Euler(quaternion_data)
     return np.tan(euler_data["angle"]/2) * euler_data["parameter"]
+
+########################################################################
+#
+# DARTS Target List Utilities
+#
+########################################################################
+
+def Get_TargetList_Quaternion_String(index:int) -> str:
+    target = api.Targets_Get_List()[index]
+    if api.Settings_Get_QuaternionType() == 'Q4':
+        return "[{:.3f}, {:.3f}, {:.3f}, {:.3f}]".format(target[1], target[2], target[3], target[0])
+    return "[{:.3f}, {:.3f}, {:.3f}, {:.3f}]".format(target[0], target[1], target[2], target[3])
