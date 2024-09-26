@@ -23,10 +23,10 @@ def DummyAttitude():
 
     time_data = np.array(api.Attitude_Plot_Get_TimeData())
 
-    q0_data = np.sin(2 * np.pi * time_data / 10)
-    q1_data = 2*np.cos(0.5 * np.pi * time_data / 10)
-    q2_data = 0.5*np.sin(np.pi * time_data / 10 + 2 * np.pi / 3)
-    q3_data = np.cos(0.75 * np.pi * time_data / 10)
+    q0_data = np.sin(2 * np.pi * time_data / 30)
+    q1_data = 2*np.cos(0.5 * np.pi * time_data / 30)
+    q2_data = 0.5*np.sin(np.pi * time_data / 30 + 2 * np.pi / 3)
+    q3_data = np.cos(0.75 * np.pi * time_data / 30)
 
     q_mag = np.sqrt(q0_data**2 + q1_data**2 + q2_data**2 + q3_data**2)
 
@@ -34,6 +34,8 @@ def DummyAttitude():
                                           q1_data / q_mag, 
                                           q2_data / q_mag, 
                                           q3_data / q_mag])
+    
+    api.Attitude_Set_Current([q0_data[-1], q1_data[-1], q2_data[-1], q3_data[-1]] / q_mag[-1])
 
 def DummyProcess(App: CTk):
     _Process_Print ("Dummy Process")

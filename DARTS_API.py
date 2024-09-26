@@ -101,13 +101,13 @@ def Attitude_Plot_Set_DisplayType(value:str) -> None:
 #
 ########################################################################
 
-def Targets_Get_CurrentDisplayIndex() -> int|list[int]:
-    _API_Print("Getting Targets Current Display Index")
-    return __main__.DARTS_Settings["Targets_CurrentDisplayIndex"]
+def Targets_Get_CurrentDisplayIndices() -> list[int]:
+    _API_Print("Getting Targets Current Display Indices")
+    return __main__.DARTS_Settings["Targets_CurrentDisplayIndices"]
 
-def Targets_Set_CurrentDisplayIndex(value:int|list[int]) -> None:
-    _API_Print(f"Setting Targets Current Display Index to {value}")
-    __main__.DARTS_Settings["Targets_CurrentDisplayIndex"] = value
+def Targets_Set_CurrentDisplayIndices(value:list[int]) -> None:
+    _API_Print(f"Setting Targets Current Display Indices to {value}")
+    __main__.DARTS_Settings["Targets_CurrentDisplayIndices"] = value
 
 def Targets_Get_List() -> list[list[float]]:
     _API_Print("Getting Targets List")

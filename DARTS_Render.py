@@ -48,45 +48,48 @@ class DARTS_RenderingFrame(CTkFrame):
         
     def define_vector(self,
                       apex=None, 
-                      start=[0,0,0], 
-                      rotAngles=[0,45,0], 
-                      length=1.0, 
+                      origin=[0,0,0], 
+                      rotAngles=[0,0,0],
+                      length=1.0,
                       tipHeight=None,
                       tipWidth=None,
-                      heightRatio = 0.2,
-                      widthRatio = 0.05):
+                      heightRatio = 0.25,
+                      widthRatio = 0.0625):
         _Render_Print(f"Defining New Vector")
 
         r = R.from_euler("xyz", rotAngles, degrees=True)
         
-        def f(x, y, height):
-            return np.sqrt(x ** 2 + y ** 2) *-1.0*height
+        def f(y, z, height):
+            return np.sqrt(y ** 2 + z ** 2) *-1.0*height
         
         if apex is not None:
             if tipHeight is None:
                 tipHeight = np.sqrt(apex * 1.0) * heightRatio * apex / abs(apex)
             if tipWidth is None:
                 tipWidth = np.sqrt(apex * 1.0) * widthRatio;
-
+            
             u1, v1 = np.mgrid[0:2*np.pi:100j, 0:np.pi:100j]
-            x1 = np.cos(u1) * np.sin(v1)
-            y1 = np.sin(u1) * np.sin(v1)
-            z1 = f(x1, y1, tipHeight) + apex
+            y1 = np.cos(u1) * np.sin(v1)
+            z1 = np.sin(u1) * np.sin(v1)
+            x1 = f(y1, z1, tipHeight) + apex
 
-            x1 *= tipWidth
             y1 *= tipWidth
+            z1 *= tipWidth
 
-            vals = np.dot(np.dstack((x1, y1, z1)), r.as_matrix().T)
-            vals2 = np.dot(np.array([[0,0,0], [0,0,1]]), r.as_matrix().T)
+            x1 += origin[0]
+            y1 += origin[1]
+            z1 += origin[2]
 
-        return vals,vals2
+            end = [origin[0] + length, origin[1], origin[2]]
+
+            cone_vals = np.dot(np.dstack((x1, y1, z1)), r.as_matrix().T)
+            rod_vals = np.dot(np.array([origin, end]), r.as_matrix().T)
+
+        return cone_vals,rod_vals
     
     def plot_vector(self, axes, origin=[0,0,0], angles=[0,0,0], length=1.0, **kwargs):
         _Render_Print(f"Plotting Vector")
 
-        angles[0], angles[2] = -angles[2], angles[0]
-        angles[1] += 90
-
-        covals, rovals = self.define_vector(1, origin, angles, length)
-        axes.plot_surface(covals[:,:,0], covals[:,:,1], covals[:,:,2], zorder=3, **kwargs)
-        axes.plot3D(rovals[:,0]*.9, rovals[:,1]*.9, rovals[:,2]*.9, zorder=2, **kwargs)
+        cone_vals, rod_vals = self.define_vector(1, origin, angles, length)
+        axes.plot_surface(cone_vals[:,:,0], cone_vals[:,:,1], cone_vals[:,:,2], zorder=3, **kwargs)
+        axes.plot3D(rod_vals[:,0]*.9, rod_vals[:,1]*.9, rod_vals[:,2]*.9, zorder=2, **kwargs)

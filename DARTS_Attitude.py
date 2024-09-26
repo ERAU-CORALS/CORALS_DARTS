@@ -15,6 +15,7 @@ import numpy as np
 
 import DARTS_API as api
 import DARTS_Utilities as util
+from DARTS_Threading import DARTS_Thread as Thread
 from DARTS_Render import DARTS_RenderingFrame
 
 def _Attitude_Print(value:str) -> None:
@@ -30,9 +31,9 @@ class AttitudeFrame(CTkFrame):
         __main__.DARTS_Settings.register("Attitude_Current", [1, 0, 0, 0])
 
         __main__.DARTS_Settings.register("Attitude_Plot_StartTime", time.time())
-        __main__.DARTS_Settings.register("Attitude_Plot_TimeLength", 10)
+        __main__.DARTS_Settings.register("Attitude_Plot_TimeLength", 30)
         __main__.DARTS_Settings.register("Attitude_Plot_TimeData", [])
-        __main__.DARTS_Settings.register("Attitude_Plot_QuaternionData")
+        __main__.DARTS_Settings.register("Attitude_Plot_QuaternionData", [np.array([])*4])
         __main__.DARTS_Settings.register("Attitude_Plot_DisplayType", "Quaternion", ["RPY Angles", "Euler Parameters", "Gibbs-Rodriguez", "Quaternion"])
 
         self.GraphSettingsFrame = AttitudeGraphSettingsFrame(self)
@@ -54,6 +55,30 @@ class AttitudeRenderingFrame(DARTS_RenderingFrame):
         self.Canvas.draw()
         self.Canvas.get_tk_widget().place(relx=0, rely=0, relwidth=1, relheight=1, anchor="nw")
 
+        self.draw_attitude_thread = Thread(self.draw_attitude_process, 200)
+        self.draw_attitude_thread.start()
+
+    def draw_attitude_process(self):
+        _Attitude_Print("Drawing Attitude Callback")
+
+        self.Axes.clear()
+        
+        self.Axes.set_xlim(-1, 1)
+        self.Axes.set_ylim(-1, 1)
+        self.Axes.set_zlim(-1, 1)
+
+        self.Axes.set_xticks([-1, 1])
+        self.Axes.set_yticks([-1, 1])
+        self.Axes.set_zticks([-1, 1])
+
+        self.plot_axes()
+
+        self.plot_vector(self.Axes, angles=np.rad2deg(util.Convert_Quaternion_to_RPY(api.Attitude_Get_Current())), color='c')
+        if len(api.Targets_Get_List()) > 0:
+            self.plot_vector(self.Axes, angles=np.rad2deg(util.Convert_Quaternion_to_RPY(api.Targets_Get_List()[0])), color='k')
+    
+        self.Canvas.draw()
+
 class AttitudeTimeGraphFrame(CTkFrame):
     def __init__(self, master, settings, **kwargs):
         _Attitude_Print("Initializing Attitude Time Graph Frame")
@@ -72,7 +97,8 @@ class AttitudeTimeGraphFrame(CTkFrame):
         self.Canvas.draw()
         self.Canvas.get_tk_widget().place(relx=0, rely=0, relwidth=1, relheight=1, anchor="nw")
 
-        self.draw_data_process()
+        self.draw_data_thread = Thread(self.draw_data_process, 1000)
+        self.draw_data_thread.start()
 
     def draw_data_process(self):   
         _Attitude_Print("Drawing Data Callback")
@@ -233,8 +259,6 @@ class AttitudeTimeGraphFrame(CTkFrame):
             self.Canvas.draw()
 
         self.Settings.update_displayed_fields()
-
-        self.after(200, self.draw_data_process)
 
 class AttitudeGraphSettingsFrame(CTkFrame):
     def __init__(self, master, **kwargs):
