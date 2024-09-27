@@ -4,6 +4,7 @@ import numpy as np
 
 from DARTS_Window import Window as App
 from DARTS_Process import DummyProcess as Main
+from DARTS_Threading import DARTS_Thread as Thread
 from DARTS_Database import DARTS_Database as Database
 from DARTS_Environment import load_environment
 
@@ -28,5 +29,8 @@ if __name__ == '__main__':
 
     App = App()
     
-    Main(App)
+    thread = Thread(Main, 200)
+    thread.start()
     App.mainloop()
+
+    thread.stop()

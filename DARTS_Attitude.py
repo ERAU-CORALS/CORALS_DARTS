@@ -58,6 +58,10 @@ class AttitudeRenderingFrame(DARTS_RenderingFrame):
         self.draw_attitude_thread = Thread(self.draw_attitude_process, 200)
         self.draw_attitude_thread.start()
 
+    def __del__(self):
+        self.draw_attitude_thread.stop()
+        super().__del__()
+
     def draw_attitude_process(self):
         _Attitude_Print("Drawing Attitude Callback")
 
@@ -99,6 +103,10 @@ class AttitudeTimeGraphFrame(CTkFrame):
 
         self.draw_data_thread = Thread(self.draw_data_process, 1000)
         self.draw_data_thread.start()
+
+    def __del__(self):
+        self.draw_data_thread.stop()
+        super().__del__()
 
     def draw_data_process(self):   
         _Attitude_Print("Drawing Data Callback")

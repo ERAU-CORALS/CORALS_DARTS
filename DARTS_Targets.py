@@ -2,6 +2,7 @@
 # The target control tab for the DARTS Application.
 
 import __main__
+import tkinter.ttk
 
 from customtkinter import (CTkFrame, CTkLabel, CTkTextbox, CTkButton)
 
@@ -50,6 +51,10 @@ class TargetRenderingFrame(DARTS_RenderingFrame):
         self.Canvas.get_tk_widget().place(x=0, y=0, relwidth=1, relheight=1, anchor="nw")
 
         self.update_rendered_targets_thread = Thread(self.update_rendered_targets_process, 1000)
+
+    def __del__(self):
+        self.update_rendered_targets_thread.stop()
+        super().__del__()
 
     def update_rendered_targets_process(self):
         _Targets_Print("Updating Rendered Targets Process")
@@ -226,6 +231,10 @@ class TargetListFrame(CTkFrame):
         self.TargetListFrames = []
         
         self.update_target_list_thread = Thread(self.update_target_list_process, 1000)
+
+    def __del__(self):
+        self.update_target_list_thread.stop()
+        super().__del__()
 
     def update_target_list_process(self):
         _Targets_Print("Updating Target List Process")

@@ -2,6 +2,7 @@
 # The database for the DARTS Application.
 
 import __main__
+from threading import Lock
 
 def _Database_Print(value:str) -> None:
     if __main__.DEBUG_DATABASE:
@@ -10,43 +11,73 @@ def _Database_Print(value:str) -> None:
 class DARTS_Database(dict):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.valid_keys = []
-        self.valid_values = {}
+        self._valid_keys = []
+        self._valid_values = {}
+        self._valid_ranges = {}
+        self._valid_value_types = {}
+        self._locks = {}
         self.DEBUG = bool("DEBUG" in kwargs and kwargs["DEBUG"])
 
-    def __setitem__(self, key:str, value:any) -> None:
-        if key not in self.valid_keys:
-            raise KeyError(f"Invalid key: {key}")
+    def __setitem__(self, key:str, value:any) -> bool:
         if not self._validate(key, value):
             raise ValueError(f"Invalid value: {value} for key: {key}")
         
-        _Database_Print(f"Setting {key} to {value}")
+        with self._locks[key].acquire():
+            _Database_Print(f"Setting {key} to {value}")
         
-        super().__setitem__(key, value)
-    
-    def __getitem__(self, key) -> any:
-        if key not in self.valid_keys:
-            raise KeyError(f"Invalid key: {key}")
-        
-        _Database_Print(f"Getting {key}")
+            super().__setitem__(key, value)
 
-        return super().__getitem__(key)
+            self._locks[key].release()
+
+            return True
+        
+        return False
     
-    def register(self, key:str, default:any=None, values:any=None) -> None:
-        if key in self.valid_keys:
+    def __getitem__(self, key) -> any|None:
+        retval = None
+
+        with self._locks[key].acquire():
+
+            _Database_Print(f"Getting {key}")
+            
+            if key not in self._valid_keys:
+                raise KeyError(f"Invalid key: {key}")
+            
+            retval = super().__getitem__(key)
+
+            self._locks[key].release()
+
+        return retval
+    
+    def register(self, key:str, types:type, default:any=None, values:list[any]=None, range:list[any]=None) -> None:
+        if key in self._valid_keys:
             raise KeyError(f"Key already registered: {key}")
         
-        _Database_Print(f"Registering {key} with default {default} and values {values}")
+        if values and range:
+            raise ValueError(f"Key {key} cannot have both values and range constraints")
+        
+        _Database_Print(f"Registering {key}\n\tType: {types}\n\tDefault: {default}\n\tValues: {values}\n\tRange: {range}")
 
-        self.valid_keys.append(key)
+        self._valid_keys.append(key)
+        self._valid_value_types[key] = types
+        self[key] = default
+        self._locks[key] = Lock()
         
         if values:
-            self.valid_values[key] = values
-        self[key] = default
+            self._valid_values[key] = values
+        elif range:
+            self._valid_ranges[key] = range
+        
+        self._locks[key].release()
 
     def _validate(self, key:str, value:any) -> bool:
         _Database_Print(f"Validating {key} with value {value}")
+
+        if key not in super().keys():
+            return False
+        if key in self._valid_values.keys():
+            return value in self._valid_values[key]
+        elif key in self._valid_ranges.keys():
+            return self._valid_ranges[key][0] <= value <= self._valid_ranges[key][1]
         
-        if key in self.valid_values:
-            return value in self.valid_values[key]
         return True

@@ -37,11 +37,9 @@ def DummyAttitude():
     
     api.Attitude_Set_Current([q0_data[-1], q1_data[-1], q2_data[-1], q3_data[-1]] / q_mag[-1])
 
-def DummyProcess(App: CTk):
+def DummyProcess():
     _Process_Print ("Dummy Process")
     loop_time = time.time()
 
     if not __main__.DARTS_Settings["Halt"]:
         DummyAttitude()
-
-    App.after(int(time.time() - loop_time + 200), DummyProcess, App)
