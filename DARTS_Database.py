@@ -8,7 +8,7 @@ def _Database_Print(value:str) -> None:
     if __main__.DEBUG_DATABASE:
         print(f"Database: {value}")
 
-class DARTS_Database(dict):
+class Database(dict):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._valid_keys = []

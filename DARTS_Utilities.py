@@ -53,7 +53,7 @@ def AttitudePlot_IsQuaternion() -> bool:
 #
 ########################################################################
 
-def Convert_Quaternion_to_RPY(quaternion_data:list[np.array]) -> list[np.array]:
+def Convert_Quaternion_to_RPY(quaternion_data:list[float]) -> list[float]:
     # Convert Quaternion to RPY Angles
     [q0_data, q1_data, q2_data, q3_data] = quaternion_data
     roll_data = np.arctan2(2*(q0_data*q1_data + q2_data*q3_data), 1 - 2*(q1_data**2 + q2_data**2))
@@ -61,16 +61,19 @@ def Convert_Quaternion_to_RPY(quaternion_data:list[np.array]) -> list[np.array]:
     yaw_data = np.arctan2(2*(q0_data*q3_data + q1_data*q2_data), 1 - 2*(q2_data**2 + q3_data**2))
     return [roll_data, pitch_data, yaw_data]
 
-def Convert_Quaternion_to_Euler(quaternion_data:list[np.array]) -> dict:
+def Convert_Quaternion_to_Euler(quaternion_data:list[float]) -> dict:
     # Convert Quaternion to Euler Parameters
     [q0_data, q1_data, q2_data, q3_data] = quaternion_data
-    qmag_data = np.sqrt(q1_data**2 + q2_data**2 + q3_data**2)
-    return {"parameter": quaternion_data[1:4] / qmag_data, "angle": 2 * np.arccos(q0_data)}
+    qhat_mag = np.sqrt(q1_data**2 + q2_data**2 + q3_data**2)
+    return {"axis": quaternion_data[1:4] / qhat_mag, "angle": 2 * np.arccos(q0_data)}
 
-def Convert_Quaternion_to_Gibbs(quaternion_data:list[np.array]) -> list[np.array]:
+def Convert_Euler_to_Gibbs(euler_data:dict) -> list[float]:
+    # Convert Euler Parameters to Gibbs-Rodriguez Parameters
+    return np.tan(euler_data["angle"]/2) * euler_data["axis"]
+
+def Convert_Quaternion_to_Gibbs(quaternion_data:list[float]) -> list[float]:
     # Convert Quaternion to Gibbs-Rodriguez Parameters
-    euler_data = Convert_Quaternion_to_Euler(quaternion_data)
-    return np.tan(euler_data["angle"]/2) * euler_data["parameter"]
+    return Convert_Euler_to_Gibbs(Convert_Quaternion_to_Euler(quaternion_data))
 
 ########################################################################
 #
