@@ -22,7 +22,9 @@ class Database(dict):
         if not self._validate(key, value):
             raise ValueError(f"Invalid value: {value} for key: {key}")
         
-        with self._locks[key].acquire():
+        self._locks[key].acquire()
+
+        with self._locks[key]:
             _Database_Print(f"Setting {key} to {value}")
         
             super().__setitem__(key, value)
@@ -33,11 +35,12 @@ class Database(dict):
         
         return False
     
-    def __getitem__(self, key) -> any|None:
+    def __getitem__(self, key) -> any:
         retval = None
 
-        with self._locks[key].acquire():
+        self._locks[key].acquire()
 
+        with self._locks[key]:
             _Database_Print(f"Getting {key}")
             
             if key not in self._valid_keys:
@@ -60,12 +63,13 @@ class Database(dict):
 
         self._valid_keys.append(key)
         self._valid_value_types[key] = types
-        self[key] = default
+        super().__setitem__(key, default)
         self._locks[key] = Lock()
+        self._locks[key].acquire()
         
-        if values:
+        if values is not None:
             self._valid_values[key] = values
-        elif range:
+        elif range is not None:
             self._valid_ranges[key] = range
         
         self._locks[key].release()

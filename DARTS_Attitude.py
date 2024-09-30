@@ -28,14 +28,6 @@ class AttitudeFrame(CTkFrame):
 
         super().__init__(master, **kwargs)
 
-        __main__.DARTS_Settings.register("Attitude_Current", [1, 0, 0, 0])
-
-        __main__.DARTS_Settings.register("Attitude_Plot_StartTime", time.time())
-        __main__.DARTS_Settings.register("Attitude_Plot_TimeLength", 30)
-        __main__.DARTS_Settings.register("Attitude_Plot_TimeData", [])
-        __main__.DARTS_Settings.register("Attitude_Plot_QuaternionData", [np.array([])*4])
-        __main__.DARTS_Settings.register("Attitude_Plot_DisplayType", "Quaternion", ["RPY Angles", "Euler Parameters", "Gibbs-Rodriguez", "Quaternion"])
-
         self.GraphSettingsFrame = AttitudeGraphSettingsFrame(self)
         self.AttitudeRenderingFrame = AttitudeRenderingFrame(self)
         self.TimeGraphFrame = AttitudeTimeGraphFrame(self, self.GraphSettingsFrame)
@@ -77,7 +69,7 @@ class AttitudeRenderingFrame(DARTS_RenderingFrame):
 
         self.plot_axes()
 
-        self.plot_vector(self.Axes, angles=np.rad2deg(util.Convert_Quaternion_to_RPY(api.Attitude_Get_Current())), color='c')
+        self.plot_vector(self.Axes, angles=api.Attitude_Get_Current_Type(type="RPY Angles"), color='c')
         if len(api.Targets_Get_List()) > 0:
             self.plot_vector(self.Axes, angles=np.rad2deg(util.Convert_Quaternion_to_RPY(api.Targets_Get_List()[0])), color='k')
     
@@ -123,7 +115,7 @@ class AttitudeTimeGraphFrame(CTkFrame):
             
             if util.AttitudePlot_IsRPYAngles():
 
-                [roll_data, pitch_data, yaw_data] = util.Convert_Quaternion_to_RPY(api.Attitude_Plot_Get_QuaternionData())
+                [roll_data, pitch_data, yaw_data] = api.Attitude_Plot_Get_AttitudeData(type="RPY Angles")
                 legend_entries = []
                 
                 if self.Settings.RollCheckbox.get():
@@ -162,8 +154,8 @@ class AttitudeTimeGraphFrame(CTkFrame):
                 
             elif util.AttitudePlot_IsEulerParameters():
 
-                euler_data = util.Convert_Quaternion_to_Euler(api.Attitude_Plot_Get_QuaternionData())
-                [e1_data, e2_data, e3_data] = euler_data["parameter"]
+                euler_data = api.Attitude_Plot_Get_AttitudeData(type="Euler Parameters")
+                [e1_data, e2_data, e3_data] = euler_data["axis"]
                 phi_data = euler_data["angle"]
                 legend_entries = []
 
@@ -208,7 +200,7 @@ class AttitudeTimeGraphFrame(CTkFrame):
                 
             elif util.AttitudePlot_IsGibbsRodriguez():
 
-                [p1_data, p2_data, p3_data] = util.Convert_Quaternion_to_Gibbs(api.Attitude_Plot_Get_QuaternionData())
+                [p1_data, p2_data, p3_data] = api.Attitude_Plot_Get_AttitudeData(type="Gibbs-Rodriguez")
                 legend_entries = []
 
                 if self.Settings.P1Checkbox.get():
@@ -232,7 +224,7 @@ class AttitudeTimeGraphFrame(CTkFrame):
                 
             elif util.AttitudePlot_IsQuaternion():
 
-                [q0_data, q1_data, q2_data, q3_data] = api.Attitude_Plot_Get_QuaternionData()
+                [q0_data, q1_data, q2_data, q3_data] = api.Attitude_Plot_Get_AttitudeData(type="Quaternion")
                 legend_entries = []
 
                 if self.Settings.Q0Checkbox.get() and api.Settings_Get_QuaternionType() == "Q0":

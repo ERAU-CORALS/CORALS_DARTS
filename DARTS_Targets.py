@@ -26,8 +26,8 @@ class TargetsFrame(CTkFrame):
 
         super().__init__(master, **kwargs)
 
-        __main__.DARTS_Settings.register("Targets_CurrentDisplayIndices", [0])
-        __main__.DARTS_Settings.register("Targets_List", [])
+        __main__.DARTS_Database.register("Targets_CurrentDisplayIndices", [0])
+        __main__.DARTS_Database.register("Targets_List", [])
 
         self.TargetRenderingSettingsFrame = RenderingSettingsFrame(self)
         self.TargetRenderingFrame = TargetRenderingFrame(self, self.TargetRenderingSettingsFrame)
@@ -134,7 +134,7 @@ class TargetEntryFrame(CTkFrame):
 
         qmag = np.sqrt(q0**2 + q1**2 + q2**2 + q3**2)
 
-        api.Targets_Set_List([[q0, q1, q2, q3] / qmag] + api.Targets_Get_List())
+        api.Targets_Get_List().insert(0, [q0, q1, q2, q3] / qmag)
 
         self.TargetEntryField1Box.delete("0.0", "end")
         self.TargetEntryField2Box.delete("0.0", "end")
@@ -151,7 +151,7 @@ class TargetEntryFrame(CTkFrame):
 
         qmag = np.sqrt(q0**2 + q1**2 + q2**2 + q3**2)
         
-        api.Targets_Set_List(api.Targets_Get_List() + [[q0, q1, q2, q3] / qmag])
+        api.Targets_Get_List().append([q0, q1, q2, q3] / qmag)
 
         self.TargetEntryField1Box.delete("0.0", "end")
         self.TargetEntryField2Box.delete("0.0", "end")

@@ -21,11 +21,6 @@ class Window(CTk):
     def __init__(self):
         super().__init__()
 
-        __main__.DARTS_Settings.register("Settings_Halt", True, [True, False])
-        __main__.DARTS_Settings.register("Settings_AngleType", "Degrees", ["Degrees", "Radians"])
-        __main__.DARTS_Settings.register("Settings_QuaternionType", "Q4", ["Q0", "Q4"])
-        __main__.DARTS_Settings.register("Settings_PlotDuration")
-
         self.title("DARTS - Data Acquisition and Remote Telecommand Script")
         self.geometry("1024x768")
         self.minsize(800, 600)
