@@ -22,7 +22,10 @@ def _Attitude_Print(value:str) -> None:
     if __main__.DEBUG_ATTITUDE_PAGE:
         print(f"Attitude Page: {value}")
 
+def _Attitude_Active() -> bool:
+    return __main__.App.MainFrame.MainTabs.get() == "Attitude"
 class AttitudeFrame(CTkFrame):
+
     def __init__(self, master, **kwargs):
         _Attitude_Print("Initializing Attitude Frame")
 
@@ -47,14 +50,17 @@ class AttitudeRenderingFrame(DARTS_RenderingFrame):
         self.Canvas.draw()
         self.Canvas.get_tk_widget().place(relx=0, rely=0, relwidth=1, relheight=1, anchor="nw")
 
-        self.draw_attitude_thread = Thread(self.draw_attitude_process, 200)
-        self.draw_attitude_thread.start()
-
-    def __del__(self):
-        self.draw_attitude_thread.stop()
-        super().__del__()
+        self.after(2500, self.draw_attitude_process)
 
     def draw_attitude_process(self):
+        _Attitude_Print("Drawing Attitude Process")
+        
+        if _Attitude_Active():
+
+            self.draw_attitude_callback()
+            self.after(200, self.draw_attitude_process)
+
+    def draw_attitude_callback(self):
         _Attitude_Print("Drawing Attitude Callback")
 
         self.Axes.clear()
@@ -93,14 +99,17 @@ class AttitudeTimeGraphFrame(CTkFrame):
         self.Canvas.draw()
         self.Canvas.get_tk_widget().place(relx=0, rely=0, relwidth=1, relheight=1, anchor="nw")
 
-        self.draw_data_thread = Thread(self.draw_data_process, 1000)
-        self.draw_data_thread.start()
+        self.after(2500, self.draw_data_process)
 
-    def __del__(self):
-        self.draw_data_thread.stop()
-        super().__del__()
+    def draw_data_process(self): 
+        _Attitude_Print("Drawing Data Process")
+        
+        if _Attitude_Active():
+            self.draw_data_callback()
 
-    def draw_data_process(self):   
+        self.after(200, self.draw_data_process)
+
+    def draw_data_callback(self):  
         _Attitude_Print("Drawing Data Callback")
 
         self.Axes.clear()
@@ -121,19 +130,19 @@ class AttitudeTimeGraphFrame(CTkFrame):
                 if self.Settings.RollCheckbox.get():
                     if util.AngleType_IsDegrees():
                         roll_data = np.degrees(roll_data)
-                    self.Axes.plot(time_data, roll_data.tolist(), color="red")
+                    self.Axes.plot(time_data, roll_data, color="red")
                     legend_entries.append("Roll")
                 
                 if self.Settings.PitchCheckbox.get():
                     if util.AngleType_IsDegrees():
                         pitch_data = np.degrees(pitch_data)
-                    self.Axes.plot(time_data, pitch_data.tolist(), color="green")
+                    self.Axes.plot(time_data, pitch_data, color="green")
                     legend_entries.append("Pitch")
                 
                 if self.Settings.YawCheckbox.get():
                     if util.AngleType_IsDegrees():
                         yaw_data = np.degrees(yaw_data)
-                    self.Axes.plot(time_data, yaw_data.tolist(), color="blue")
+                    self.Axes.plot(time_data, yaw_data, color="blue")
                     legend_entries.append("Yaw")
 
                 self.Axes.legend(legend_entries, loc='upper left')
@@ -160,15 +169,15 @@ class AttitudeTimeGraphFrame(CTkFrame):
                 legend_entries = []
 
                 if self.Settings.E1Checkbox.get():
-                    self.Axes.plot(time_data, e1_data.tolist(), color="red")
+                    self.Axes.plot(time_data, e1_data, color="red")
                     legend_entries.append("E1")
                 
                 if self.Settings.E2Checkbox.get():
-                    self.Axes.plot(time_data, e2_data.tolist(), color="green")
+                    self.Axes.plot(time_data, e2_data, color="green")
                     legend_entries.append("E2")
                 
                 if self.Settings.E3Checkbox.get():
-                    self.Axes.plot(time_data, e3_data.tolist(), color="blue")
+                    self.Axes.plot(time_data, e3_data, color="blue")
                     legend_entries.append("E3")
 
                 self.Axes.legend(legend_entries, loc='upper left')
@@ -179,7 +188,7 @@ class AttitudeTimeGraphFrame(CTkFrame):
                 if self.Settings.PhiCheckbox.get():
                     if util.AngleType_IsDegrees():
                         phi_data = np.degrees(phi_data)
-                    self.AltAxes.plot(time_data, phi_data.tolist(), color="cyan")
+                    self.AltAxes.plot(time_data, phi_data, color="cyan")
                 
                     self.AltAxes.legend(["Phi"], loc='upper right')
                     if util.AngleType_IsDegrees():
@@ -204,15 +213,15 @@ class AttitudeTimeGraphFrame(CTkFrame):
                 legend_entries = []
 
                 if self.Settings.P1Checkbox.get():
-                    self.Axes.plot(time_data, p1_data.tolist(), color="red")
+                    self.Axes.plot(time_data, p1_data, color="red")
                     legend_entries.append("P1")
                 
                 if self.Settings.P2Checkbox.get():
-                    self.Axes.plot(time_data, p2_data.tolist(), color="green")
+                    self.Axes.plot(time_data, p2_data, color="green")
                     legend_entries.append("P2")
                 
                 if self.Settings.P3Checkbox.get():
-                    self.Axes.plot(time_data, p3_data.tolist(), color="blue")
+                    self.Axes.plot(time_data, p3_data, color="blue")
                     legend_entries.append("P3")
                 
                 self.Axes.legend(legend_entries, loc='upper left')
@@ -224,27 +233,27 @@ class AttitudeTimeGraphFrame(CTkFrame):
                 
             elif util.AttitudePlot_IsQuaternion():
 
-                [q0_data, q1_data, q2_data, q3_data] = api.Attitude_Plot_Get_AttitudeData(type="Quaternion")
+                [q1_data, q2_data, q3_data, q4_data] = api.Attitude_Plot_Get_AttitudeData(type="Quaternion")
                 legend_entries = []
 
                 if self.Settings.Q0Checkbox.get() and api.Settings_Get_QuaternionType() == "Q0":
-                    self.Axes.plot(time_data, q0_data.tolist(), color="cyan")
+                    self.Axes.plot(time_data, q4_data, color="cyan")
                     legend_entries.append("Q0")
                 
                 if self.Settings.Q1Checkbox.get():
-                    self.Axes.plot(time_data, q1_data.tolist(), color="red")
+                    self.Axes.plot(time_data, q1_data, color="red")
                     legend_entries.append("Q1")
                 
                 if self.Settings.Q2Checkbox.get():
-                    self.Axes.plot(time_data, q2_data.tolist(), color="green")
+                    self.Axes.plot(time_data, q2_data, color="green")
                     legend_entries.append("Q2")
                 
                 if self.Settings.Q3Checkbox.get():
-                    self.Axes.plot(time_data, q3_data.tolist(), color="blue")
+                    self.Axes.plot(time_data, q3_data, color="blue")
                     legend_entries.append("Q3")
 
                 if self.Settings.Q4Checkbox.get() and api.Settings_Get_QuaternionType() == "Q4":
-                    self.Axes.plot(time_data, q0_data.tolist(), color="cyan")
+                    self.Axes.plot(time_data, q4_data, color="cyan")
                     legend_entries.append("Q4")
 
                 self.Axes.legend(legend_entries, loc='upper left')
@@ -266,12 +275,15 @@ class AttitudeGraphSettingsFrame(CTkFrame):
 
         super().__init__(master, **kwargs)
 
+        _Attitude_Print("Creating Subframes")
         self.LeftFrame = CTkFrame(self)
         self.RightFrame = CTkFrame(self)
 
+        _Attitude_Print("Placing Subframes")
         self.LeftFrame.place(relx=0, rely=0, relwidth=0.5, relheight=1, anchor="nw")
         self.RightFrame.place(relx=1, rely=0, relwidth=0.5, relheight=1, anchor="ne")
 
+        _Attitude_Print("Creating RPY Checkboxes")
         self.RollCheckbox = CTkCheckBox(self.RightFrame, text="Roll")
         self.PitchCheckbox = CTkCheckBox(self.RightFrame, text="Pitch")
         self.YawCheckbox = CTkCheckBox(self.RightFrame, text="Yaw")
@@ -280,6 +292,7 @@ class AttitudeGraphSettingsFrame(CTkFrame):
                                      self.PitchCheckbox, 
                                      self.YawCheckbox]
 
+        _Attitude_Print("Creating Euler Parameter Checkboxes")
         self.E1Checkbox = CTkCheckBox(self.RightFrame, text="E1")
         self.E2Checkbox = CTkCheckBox(self.RightFrame, text="E2")
         self.E3Checkbox = CTkCheckBox(self.RightFrame, text="E3")
@@ -290,6 +303,7 @@ class AttitudeGraphSettingsFrame(CTkFrame):
                                          self.E3Checkbox,
                                          self.PhiCheckbox]
 
+        _Attitude_Print("Creating Gibbs-Rodriguez Checkboxes")
         self.P1Checkbox = CTkCheckBox(self.RightFrame, text="P1")
         self.P2Checkbox = CTkCheckBox(self.RightFrame, text="P2")
         self.P3Checkbox = CTkCheckBox(self.RightFrame, text="P3")
@@ -298,6 +312,7 @@ class AttitudeGraphSettingsFrame(CTkFrame):
                                          self.P2Checkbox,
                                          self.P3Checkbox]
 
+        _Attitude_Print("Creating Quaternion Checkboxes")
         self.Q0Checkbox = CTkCheckBox(self.RightFrame, text="Q0")
         self.Q1Checkbox = CTkCheckBox(self.RightFrame, text="Q1")
         self.Q2Checkbox = CTkCheckBox(self.RightFrame, text="Q2")
@@ -315,9 +330,11 @@ class AttitudeGraphSettingsFrame(CTkFrame):
                         + self.GibbsRodriguezCheckboxes \
                         + self.QuaternionCheckboxes
         
+        _Attitude_Print("Setting ALL Checkboxes")
         for Checkbox in self.Checkboxes:
             Checkbox.select()
 
+        _Attitude_Print("Creating Display Type Widgets")
         self.DisplayTypeLabel = CTkLabel(self.LeftFrame, text="Display Type:", justify="left")
         self.DisplayTypeSelect = CTkComboBox(self.LeftFrame, 
                                              values=["RPY Angles", 
@@ -325,15 +342,18 @@ class AttitudeGraphSettingsFrame(CTkFrame):
                                                      "Gibbs-Rodriguez", 
                                                      "Quaternion"],
                                              command=self.display_type_callback)
-        
+
+        _Attitude_Print("Placing Display Type Widgets")        
         self.DisplayTypeLabel.pack(anchor="w")
         self.DisplayTypeSelect.pack(anchor="w")
         self.DisplayTypeSelect.set(api.Attitude_Plot_Get_DisplayType())
 
+        _Attitude_Print("Creating Timespan Widgets")
         self.TimespanLabel = CTkLabel(self.LeftFrame, text="Timespan (s):", justify="left")
         self.TimespanEntry = CTkTextbox(self.LeftFrame, height=12)
         self.TimespanUpdateButton = CTkButton(self.LeftFrame, text="Update", command=self.timespan_button_callback)
 
+        _Attitude_Print("Placing Timespan Widgets")
         self.TimespanLabel.pack(anchor="w")
         self.TimespanEntry.pack(anchor="w")
         self.TimespanUpdateButton.pack(anchor="w")

@@ -26,9 +26,6 @@ class TargetsFrame(CTkFrame):
 
         super().__init__(master, **kwargs)
 
-        __main__.DARTS_Database.register("Targets_CurrentDisplayIndices", [0])
-        __main__.DARTS_Database.register("Targets_List", [])
-
         self.TargetRenderingSettingsFrame = RenderingSettingsFrame(self)
         self.TargetRenderingFrame = TargetRenderingFrame(self, self.TargetRenderingSettingsFrame)
         self.TargetEntryFrame = TargetEntryFrame(self)
@@ -50,13 +47,17 @@ class TargetRenderingFrame(DARTS_RenderingFrame):
         self.Canvas.draw()
         self.Canvas.get_tk_widget().place(x=0, y=0, relwidth=1, relheight=1, anchor="nw")
 
-        self.update_rendered_targets_thread = Thread(self.update_rendered_targets_process, 1000)
-
-    def __del__(self):
-        self.update_rendered_targets_thread.stop()
-        super().__del__()
+        self.after(2500, self.update_rendered_targets_process)
 
     def update_rendered_targets_process(self):
+        _Targets_Print("Updating Rendered Targets Process")
+        
+        if __main__.App.MainFrame.MainTabs.get() == "Targets":
+            self.update_rendered_targets_callback()
+
+        self.after(1000, self.update_rendered_targets_process)
+
+    def update_rendered_targets_callback(self):
         _Targets_Print("Updating Rendered Targets Process")
 
         self.Axes.clear()
@@ -71,13 +72,13 @@ class TargetRenderingFrame(DARTS_RenderingFrame):
 
         self.plot_axes()
 
-        for TargetIndex in api.Targets_Get_CurrentDisplayIndices():
+        for TargetIndex in api.Targets_Get_CurrentIndices():
             
             if TargetIndex < len(api.Targets_Get_List()):
                 
                 angles = np.rad2deg(util.Convert_Quaternion_to_RPY(api.Targets_Get_List()[TargetIndex]))
                 
-                if TargetIndex is 0:
+                if TargetIndex == 0:
                 
                     self.plot_vector(self.Axes, [0,0,0], angles, 1.0, color="k")
                 
@@ -230,18 +231,15 @@ class TargetListFrame(CTkFrame):
 
         self.TargetListFrames = []
         
-        self.update_target_list_thread = Thread(self.update_target_list_process, 1000)
-
-    def __del__(self):
-        self.update_target_list_thread.stop()
-        super().__del__()
+        self.after(2500, self.update_target_list_process)
 
     def update_target_list_process(self):
         _Targets_Print("Updating Target List Process")
+        
+        if __main__.App.MainFrame.MainTabs.get() == "Targets":
+            self.update_target_list_callback()
 
-        self.update_target_list_callback()
-
-        self.TargetEntry.update_field_labels()
+        self.after(1000, self.update_target_list_process)
 
     def update_target_list_callback(self):
         _Targets_Print("Updating Target List Process")
@@ -278,7 +276,7 @@ class RenderingSettingsFrame(CTkFrame):
         self.TargetIndexLabel.pack(anchor='w')
         self.TargetIndexEntry.pack(anchor='w', fill='x')
         self.TargetIndexUpdateButton.pack(anchor='w', fill='x')
-        self.TargetIndexEntry.insert("0.0", api.Targets_Get_CurrentDisplayIndices())
+        self.TargetIndexEntry.insert("0.0", api.Targets_Get_CurrentIndices())
 
     def update_target_index_callback(self):
         _Targets_Print("Updating Target Index")
@@ -294,5 +292,5 @@ class RenderingSettingsFrame(CTkFrame):
         api.Targets_Set_CurrentDisplayIndices([int(i) for i in self.TargetIndexEntry.get("0.0", "end").strip('[] \n\r').split(',')])
 
         self.TargetIndexEntry.delete("0.0", "end")
-        self.TargetIndexEntry.insert("0.0", f"{api.Targets_Get_CurrentDisplayIndices()}")
+        self.TargetIndexEntry.insert("0.0", f"{api.Targets_Get_CurrentIndices()}")
 

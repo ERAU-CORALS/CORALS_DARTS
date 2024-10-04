@@ -18,29 +18,35 @@ class Database(dict):
         self._locks = {}
         self.DEBUG = bool("DEBUG" in kwargs and kwargs["DEBUG"])
 
-    def __setitem__(self, key:str, value:any) -> bool:
+    def __setitem__(self, key:str, value:any, timeout:float=0.1) -> bool:
         if not self._validate(key, value):
             raise ValueError(f"Invalid value: {value} for key: {key}")
         
-        self._locks[key].acquire()
+        self._locks[key].acquire(timeout=timeout)
 
-        with self._locks[key]:
+        if self._locks[key].locked():
             _Database_Print(f"Setting {key} to {value}")
         
             super().__setitem__(key, value)
 
             self._locks[key].release()
 
-            return True
+            return True 
+        
+        else:
+            _Database_Print(f"Failed to acquire lock for {key}")
         
         return False
     
-    def __getitem__(self, key) -> any:
+    def __getitem__(self, key, timeout:float=0.1) -> any:
+        _Database_Print(f"Getting {key}")
         retval = None
 
-        self._locks[key].acquire()
+        _Database_Print(f"Acquiring Lock for {key}")
+        self._locks[key].acquire(timeout=timeout)
+        _Database_Print(f"Acquiring Lock for {key}")
 
-        with self._locks[key]:
+        if self._locks[key].locked():
             _Database_Print(f"Getting {key}")
             
             if key not in self._valid_keys:
@@ -49,6 +55,8 @@ class Database(dict):
             retval = super().__getitem__(key)
 
             self._locks[key].release()
+        else:
+            _Database_Print(f"Failed to acquire lock for {key}")
 
         return retval
     
@@ -78,10 +86,13 @@ class Database(dict):
         _Database_Print(f"Validating {key} with value {value}")
 
         if key not in super().keys():
+            _Database_Print(f"Key {key} not registered")
             return False
         if key in self._valid_values.keys():
+            _Database_Print(f"Validating {key} with values {self._valid_values[key]}: {value in self._valid_values[key]}")
             return value in self._valid_values[key]
         elif key in self._valid_ranges.keys():
+            _Database_Print(f"Validating {key} with range {self._valid_ranges[key]}")
             return self._valid_ranges[key][0] <= value <= self._valid_ranges[key][1]
         
         return True

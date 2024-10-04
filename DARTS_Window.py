@@ -17,8 +17,13 @@ from DARTS_Debug import DebugFrame
 import DARTS_API as api
 import DARTS_Utilities as util
 
+def _Window_Print(value:str) -> None:
+    if __main__.DEBUG_WINDOW:
+        print(f"Window: {value}")
+
 class Window(CTk):
     def __init__(self):
+        _Window_Print("Initializing Main Window")
         super().__init__()
 
         self.title("DARTS - Data Acquisition and Remote Telecommand Script")

@@ -74,19 +74,23 @@ def Attitude_Plot_Get_TimeData() -> list[float]:
     _API_Print("Getting Attitude Plot Time Data")
     return __main__.DARTS_Database["Attitude"]["Plot_TimeData"]
 
-def Attitude_Plot_Push_TimeData(value:list[float], index:int=-1) -> None:
+def Attitude_Plot_Push_TimeData(value:list[float]) -> None:
     _API_Print(f"Setting Attitude Plot Time Data to {value}")
-    __main__.DARTS_Database["Attitude"]["Plot_TimeData"].insert(index, value)
+    __main__.DARTS_Database["Attitude"]["Plot_TimeData"].append(value)
 
 def Attitude_Plot_Pop_TimeData(index:int=0) -> float:
     _API_Print("Popping Attitude Plot Time Data")
     return __main__.DARTS_Database["Attitude"]["Plot_TimeData"].pop(index)
 
+def Attitude_Plot_Clear_TimeData() -> None:
+    _API_Print("Clearing Attitude Plot Time Data")
+    __main__.DARTS_Database["Attitude"]["Plot_TimeData"].clear()
+
 def Attitude_Plot_Get_AttitudeData(type:str="RPY Angles") -> list[float]:
     _API_Print(f"Getting Attitude Plot {type} Data")
     return __main__.DARTS_Database["Attitude"]["Plot_AttitudeData"][type]
 
-def Attitude_Plot_Push_AttitudeData(value:list[float], type:str="RPY Angles", index:int=-1) -> None:
+def Attitude_Plot_Push_AttitudeData(value:list[float], type:str="RPY Angles") -> None:
     _API_Print(f"Setting Attitude Plot {type} Data to {value}")
     
     if type == "RPY Angles":
@@ -119,15 +123,16 @@ def Attitude_Plot_Push_AttitudeData(value:list[float], type:str="RPY Angles", in
 
     for i in range(3):
 
-        __main__.DARTS_Database["Attitude"]["Plot_AttitudeData"]["RPY Angles"][i].insert(index, angles[i])
-        __main__.DARTS_Database["Attitude"]["Plot_AttitudeData"]["Euler Parameters"]["axis"][i].insert(index, euler["axis"][i])
-        __main__.DARTS_Database["Attitude"]["Plot_AttitudeData"]["Gibbs-Rodriguez"][i].insert(index, gibbs[i])
-        __main__.DARTS_Database["Attitude"]["Plot_AttitudeData"]["Quaternion"][i].insert(index, quat[i])
+        __main__.DARTS_Database["Attitude"]["Plot_AttitudeData"]["RPY Angles"][i].append(angles[i])
+        __main__.DARTS_Database["Attitude"]["Plot_AttitudeData"]["Euler Parameters"]["axis"][i].append(euler["axis"][i])
+        __main__.DARTS_Database["Attitude"]["Plot_AttitudeData"]["Gibbs-Rodriguez"][i].append(gibbs[i])
+        __main__.DARTS_Database["Attitude"]["Plot_AttitudeData"]["Quaternion"][i].append(quat[i])
 
-    __main__.DARTS_Database["Attitude"]["Plot_AttitudeData"]["Euler Parameters"]["angle"].insert(index, euler["angle"])
-    __main__.DARTS_Database["Attitude"]["Plot_AttitudeData"]["Quaternion"][3].insert(index, quat[3])
+    __main__.DARTS_Database["Attitude"]["Plot_AttitudeData"]["Euler Parameters"]["angle"].append(euler["angle"])
+    __main__.DARTS_Database["Attitude"]["Plot_AttitudeData"]["Quaternion"][3].append(quat[3])
 
 def Attitude_Plot_Pop_AttitudeData(index:int=0) -> None:
+    _API_Print("Popping Attitude Plot Attitude Data")
 
     for i in range(3):
 
@@ -139,6 +144,19 @@ def Attitude_Plot_Pop_AttitudeData(index:int=0) -> None:
     __main__.DARTS_Database["Attitude"]["Plot_AttitudeData"]["Euler Parameters"]["angle"].pop(index)
     __main__.DARTS_Database["Attitude"]["Plot_AttitudeData"]["Quaternion"][3].pop(index)
 
+def Attitude_Plot_Clear_AttitudeData() -> None:
+    _API_Print("Clearing Attitude Plot Data")
+
+    for i in range(3):
+            
+        __main__.DARTS_Database["Attitude"]["Plot_AttitudeData"]["RPY Angles"][i].clear()
+        __main__.DARTS_Database["Attitude"]["Plot_AttitudeData"]["Euler Parameters"]["axis"][i].clear()
+        __main__.DARTS_Database["Attitude"]["Plot_AttitudeData"]["Gibbs-Rodriguez"][i].clear()
+        __main__.DARTS_Database["Attitude"]["Plot_AttitudeData"]["Quaternion"][i].clear()
+
+    __main__.DARTS_Database["Attitude"]["Plot_AttitudeData"]["Euler Parameters"]["angle"].clear()
+    __main__.DARTS_Database["Attitude"]["Plot_AttitudeData"]["Quaternion"][3].clear()
+    
 def Attitude_Plot_Get_DisplayType() -> str:
     _API_Print("Getting Attitude Plot Display Type")
     return __main__.DARTS_Database["Attitude"]["Plot_DisplayType"]

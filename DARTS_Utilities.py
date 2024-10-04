@@ -15,11 +15,12 @@ from scipy.spatial.transform import Rotation as rot
 ########################################################################
 
 def StartTestbed() -> None:
-    api.Settings_Set_Halt(False)
-
     # Start Attitude Logging
     api.Attitude_Plot_Set_StartTime(time.time())
-    api.Attitude_Plot_Set_TimeData([])
+    api.Attitude_Plot_Clear_TimeData()
+    api.Attitude_Plot_Clear_AttitudeData()
+
+    api.Settings_Set_Halt(False)
 
 def StopTestbed() -> None:
     api.Settings_Set_Halt(True)

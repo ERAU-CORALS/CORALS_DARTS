@@ -26,7 +26,7 @@ def DummyAttitude():
     q3_data = np.cos(0.75 * np.pi * generation_time / 30)
     q4_data = np.sin(2 * np.pi * generation_time / 30)
 
-    q_mag = np.sqrt(q0_data**2 + q1_data**2 + q2_data**2 + q3_data**2)
+    q_mag = np.sqrt(q1_data**2 + q2_data**2 + q3_data**2 + q4_data**2)
     quat_data = [q1_data, q2_data, q3_data, q4_data]
     quat_data /= q_mag
 
@@ -38,7 +38,7 @@ def DummyAttitude():
 
 def DummyAttitudeProcess():
     _Process_Print ("Dummy Process")
-    loop_time = time.time()
 
-    if not __main__.DARTS_Database["Halt"]:
+    print (f"Halt State: {api.Settings_Get_Halt()}")
+    if not api.Settings_Get_Halt():
         DummyAttitude()
