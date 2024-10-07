@@ -2,10 +2,6 @@
 # The API functions for the DARTS Application.
 
 import __main__
-import time
-
-import numpy as np
-from scipy.spatial.transform import Rotation as rot
 
 import DARTS_Utilities as util
 

@@ -13,7 +13,6 @@ import numpy as np
 
 import DARTS_API as api
 import DARTS_Utilities as util
-from DARTS_Threading import DARTS_Thread as Thread
 from DARTS_Render import DARTS_RenderingFrame
 
 def _Targets_Print(value:str) -> None:

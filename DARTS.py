@@ -1,22 +1,25 @@
 import __main__
 import time
 
-import numpy as np
-
 from DARTS_Window import Window
-from DARTS_Process import DummyAttitude as AttitudeProcess
-from DARTS_Threading import DARTS_Thread as Thread
+from DARTS_Process import DummyAttitudeProcess as AttitudeProcess
+from DARTS_Parallel import DARTS_Manager as Manager, DARTS_Process as Process
 from DARTS_Database import Database
 from DARTS_Environment import load_environment
+
+Manager.register("dict", dict)
+Manager.register("Database", Database)
 
 def DARTS_Initialize():
     load_environment()
 
-    __main__.DARTS_Database = {
-        "Attitude": Database(),
-        "Target": Database(),
-        "Settings": Database(),
-    }
+    __main__.DARTS_Manager = Manager()
+    __main__.DARTS_Manager.start()
+
+    __main__.DARTS_Database = __main__.DARTS_Manager.dict()
+    __main__.DARTS_Database["Attitude"] = __main__.DARTS_Manager.Database()
+    __main__.DARTS_Database["Target"] = __main__.DARTS_Manager.Database()
+    __main__.DARTS_Database["Settings"] = __main__.DARTS_Manager.Database()
 
     __main__.DARTS_Database["Attitude"].register("Current", dict, default={"RPY Angles": [0, 0, 0],
                                                                            "Euler Parameters": {"axis": [0, 0, 0], "angle": 0},
@@ -42,25 +45,35 @@ def DARTS_Initialize():
     __main__.DARTS_Database["Settings"].register("QuaternionType", str, default="Q4",
                                                                         values=["Q0", "Q4"])
     
-    threads = {
-        "Attitude": Thread(AttitudeProcess, 200, name="Attitude"),
+
+    processes = {
+        "Attitude": Process(AttitudeProcess, 200, name="Attitude"),
+        "Blinky" : Process(lambda: print("Blinky"), 1000, name="Blinky")
     }
-    for key in threads:
-        print(f"Starting {key} thread...")
-        threads[key].start()
-        print(f"{key} thread started...")
+
+    def Start_Processes(processes: dict[str, Process]) -> None:
+        for key in processes:
+            print(f"Starting {key} thread...")
+            processes[key].start()
+            print(f"{key} thread started...")
+
+    def Stop_Processes(processes: dict[str, Process]) -> None:
+        for key in processes:
+            print(f"Stopping {key} thread...")
+            processes[key].stop()
+            print(f"{key} thread stopped...")
+
+    def DARTS_Exit() -> None:
+        Stop_Processes(processes)
+        exit()
 
     print("Creating Window...")
     __main__.App = Window()
     print("Window Created...")
+    __main__.App.after(1000, lambda: Start_Processes(processes))
+    __main__.App.protocol("WM_DELETE_WINDOW", DARTS_Exit)
     print("Running Mainloop...")
     __main__.App.mainloop()
-    print("Mainloop Exited...")
-
-    for key in threads:
-        print(f"Stopping {key} thread...")
-        threads[key].stop()
-        print(f"{key} thread stopped...")
 
 if __name__ == '__main__':
     DARTS_Initialize()

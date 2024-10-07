@@ -1,16 +1,19 @@
-# Darts_Thread.py
-# The thread class for the DARTS Application.
+# Darts_Parallel.py
+# The multiprocessing class for the DARTS Application.
 
 import __main__
-from threading import (Thread, local)
+from multiprocessing import Process
+from multiprocessing.managers import BaseManager
 import time
+
+from DARTS_Environment import load_environment
 
 def time_ms() -> int:
     return int(time.time() * 1000)
 
-class DARTS_Thread(Thread):
+class DARTS_Process(Process):
     def __init__(self, function, period_ms:int, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(target=self._loop, **kwargs)
 
         self._function = function
         self._period_ms = period_ms
@@ -31,7 +34,9 @@ class DARTS_Thread(Thread):
     def stop(self):
         self._runnable = False
 
-    def run(self):
+    def _loop(self):
+        load_environment()
+
         while self._runnable:
             
             loop_time = time_ms()
@@ -40,5 +45,5 @@ class DARTS_Thread(Thread):
                 self._function()
             
             time.sleep(self._period_ms / 1000 + time_ms() - loop_time)
-        
-        self.join()
+
+class DARTS_Manager(BaseManager): pass

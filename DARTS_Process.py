@@ -12,8 +12,8 @@ import DARTS_API as api
 import DARTS_Utilities as util
 
 def _Process_Print(value:str) -> None:
-    if __main__.DEBUG_PROCESS:
-        print(f"Process: {value}")
+    if __main__.DEBUG:
+        print(f"Process: {value}", flush=True)
 
 def DummyAttitude():
     _Process_Print("Dummy Attitude Generation")
@@ -39,6 +39,7 @@ def DummyAttitude():
 def DummyAttitudeProcess():
     _Process_Print ("Dummy Process")
 
-    print (f"Halt State: {api.Settings_Get_Halt()}")
+    print(f"Halt State: {api.Settings_Get_Halt()}")
+
     if not api.Settings_Get_Halt():
         DummyAttitude()
