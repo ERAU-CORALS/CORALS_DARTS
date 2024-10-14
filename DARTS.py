@@ -3,23 +3,16 @@ import time
 
 from DARTS_Window import Window
 from DARTS_Process import DummyAttitudeProcess as AttitudeProcess
-from DARTS_Parallel import DARTS_Manager as Manager, DARTS_Process as Process
-from DARTS_Database import Database
+from DARTS_Parallel import DARTS_Process as Process
+from DARTS_Database import DatabaseManager as Database
 from DARTS_Environment import load_environment
-
-Manager.register("dict", dict)
-Manager.register("Database", Database)
 
 def DARTS_Initialize():
     load_environment()
 
-    __main__.DARTS_Manager = Manager()
-    __main__.DARTS_Manager.start()
+    __main__.DARTS_Database = Database(daemon=True)
 
-    __main__.DARTS_Database = __main__.DARTS_Manager.dict()
-    __main__.DARTS_Database["Attitude"] = __main__.DARTS_Manager.Database()
-    __main__.DARTS_Database["Target"] = __main__.DARTS_Manager.Database()
-    __main__.DARTS_Database["Settings"] = __main__.DARTS_Manager.Database()
+    __main__.DARTS_Database.new("Attitude")
 
     __main__.DARTS_Database["Attitude"].register("Current", dict, default={"RPY Angles": [0, 0, 0],
                                                                            "Euler Parameters": {"axis": [0, 0, 0], "angle": 0},
@@ -36,9 +29,13 @@ def DARTS_Initialize():
     __main__.DARTS_Database["Attitude"].register("Plot_DisplayType", str, default="RPY Angles",
                                                                           values=["RPY Angles", "Euler Parameters", "Gibbs-Rodriguez", "Quaternion"])
 
+    __main__.DARTS_Database.new("Target")
+
     __main__.DARTS_Database["Target"].register("List", list, default=[])
     __main__.DARTS_Database["Target"].register("Indices", list, default=[])
 
+    __main__.DARTS_Database.new("Settings")
+    
     __main__.DARTS_Database["Settings"].register("Halt", bool, default=True, values=[True, False])
     __main__.DARTS_Database["Settings"].register("AngleType", str, default="Degrees", 
                                                                    values=["Degrees", "Radians"])

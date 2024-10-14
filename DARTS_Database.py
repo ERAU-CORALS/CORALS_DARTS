@@ -2,124 +2,165 @@
 # The database for the DARTS Application.
 
 import __main__
-from multiprocessing import Lock
-from multiprocessing.managers import BaseManager, DictProxy
+from multiprocessing import Pipe
+from multiprocessing.connection import PipeConnection
+from multiprocessing.managers import BaseManager, DictProxy, ListProxy
 
 def _Database_Print(value:str) -> None:
     if __main__.DEBUG_DATABASE:
         print(f"Database: {value}")
 
+default_address = ('localhost', 3141)
+default_key = b''
+
 class DatabaseManager(BaseManager):
 
-    class Database(dict):
-        def __init__(self, **kwargs):
-            super().__init__(**kwargs)
-            self._valid_keys = []
-            self._valid_values = {}
-            self._valid_ranges = {}
-            self._valid_value_types = {}
-            self._locks = {}
-            self.DEBUG = bool("DEBUG" in kwargs and kwargs["DEBUG"])
-
-        def __setitem__(self, key:str, value:any, timeout:float=0.1) -> bool:
-            if not self._validate(key, value):
-                raise ValueError(f"Invalid value: {value} for key: {key}")
-            
-            self._locks[key].acquire(timeout=timeout)
-
-            if self._locks[key].locked():
-                _Database_Print(f"Setting {key} to {value}")
-            
-                super().__setitem__(key, value)
-
-                self._locks[key].release()
-
-                return True 
-            
-            else:
-                _Database_Print(f"Failed to acquire lock for {key}")
-            
-            return False
+    def __init__(self, categories:list[str]=None, daemon:bool=False, **kwargs):
+        if 'address' not in kwargs:
+            kwargs['address'] = default_address
         
-        def __getitem__(self, key, timeout:float=0.1) -> any:
-            _Database_Print(f"Getting {key}")
-            retval = None
-
-            _Database_Print(f"Acquiring Lock for {key}")
-            self._locks[key].acquire(timeout=timeout)
-            _Database_Print(f"Acquiring Lock for {key}")
-
-            if self._locks[key].locked():
-                _Database_Print(f"Getting {key}")
-                
-                if key not in self._valid_keys:
-                    raise KeyError(f"Invalid key: {key}")
-                
-                retval = super().__getitem__(key)
-
-                self._locks[key].release()
-            else:
-                _Database_Print(f"Failed to acquire lock for {key}")
-
-            return retval
+        if 'authkey' not in kwargs:
+            kwargs['authkey'] = default_key
         
-        def register(self, key:str, types:type, default:any=None, values:list[any]=None, range:list[any]=None) -> None:
-            if key in self._valid_keys:
-                raise KeyError(f"Key already registered: {key}")
-            
-            if values and range:
-                raise ValueError(f"Key {key} cannot have both values and range constraints")
-            
-            _Database_Print(f"Registering {key}\n\tType: {types}\n\tDefault: {default}\n\tValues: {values}\n\tRange: {range}")
-
-            self._valid_keys.append(key)
-            self._valid_value_types[key] = types
-            super().__setitem__(key, default)
-            self._locks[key] = Lock()
-            self._locks[key].acquire()
-            
-            if values is not None:
-                self._valid_values[key] = values
-            elif range is not None:
-                self._valid_ranges[key] = range
-            
-            self._locks[key].release()
-
-        def _validate(self, key:str, value:any) -> bool:
-            _Database_Print(f"Validating {key} with value {value}")
-
-            if key not in super().keys():
-                _Database_Print(f"Key {key} not registered")
-                return False
-            if key in self._valid_values.keys():
-                _Database_Print(f"Validating {key} with values {self._valid_values[key]}: {value in self._valid_values[key]}")
-                return value in self._valid_values[key]
-            elif key in self._valid_ranges.keys():
-                _Database_Print(f"Validating {key} with range {self._valid_ranges[key]}")
-                return self._valid_ranges[key][0] <= value <= self._valid_ranges[key][1]
-            
-            return True
-
-    class DatabaseProxy(DictProxy):
-        def register(self)
-
-    def __init__(self, categories:list[str]=None, **kwargs):
         super().__init__(**kwargs)
 
-        self.DatabaseProxy = MakeProxyType(Database, exposed=)
 
-        super().register("dict", dict)
+        self.register("dict", dict, DictProxy)
+        self.register("list", list, ListProxy)
+        self.register("Database", DatabaseClass, DatabaseProxy)
 
-        super().start()
-        self._categories = super().list(categories)
-        self._databases = super().dict()
+        if daemon:
+            self.start()
+
+        self._categories = self.list(categories if categories else [])
+        self._databases = self.dict()
+
+        if categories:
+            for category in categories:
+                self.new(category)
 
     def new(self, name:str, **kwargs):
         if name in self._categories:
             raise KeyError(f"Category {name} already exists")
         
         self._categories.append(name)
-        self._databases[name] = super().dict(**kwargs)
+        self._databases[name] = self.Database(**kwargs)
+
+class DatabaseClass(dict):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        with DatabaseManager() as manager:
+            manager.connect()
+        
+            self._locks = manager.dict()
+
+            self._valid_keys = manager.list()
+            self._key_data = manager.dict()
+
+        self.DEBUG = bool("DEBUG" in kwargs and kwargs["DEBUG"])
+    
+    class DatabaseKeyData:
+        def __init__(self, values:list[any]=None, range:list[any]=None, types:list[type]=None):
+            if values and range:
+                raise ValueError(f"Key cannot have both values and range constraints")
+            
+            with DatabaseManager() as manager:
+                self.values = manager.list(values) if values else None
+                self.range = manager.list(range) if range else None
+
+                self.types = manager.list(types) if types else None
+
+        def value_constrained(self) -> bool:
+            return self.values is not None
+        
+        def range_constrained(self) -> bool:
+            return self.range is not None
+        
+        def type_constrained(self) -> bool:
+            return self.types is not None
+        
+        def validate(self, value:any) -> bool:
+            retval = True
+            if self.value_constrained():
+                retval = value in self.values
+            elif self.range_constrained():
+                retval = self.range[0] <= value <= self.range[1]
+            
+            if retval and self.type_constrained():
+                retval = type(value) in self.types
+            
+            return retval
+
+    def __setitem__(self, key:str, value:any, timeout:float=0.1):
+        _Database_Print(f"Setting {key} to {value}")
+
+        if key not in self._valid_keys:
+            raise KeyError(f"Invalid key: {key}")
+
+        if not self._key_data[key].validate(value):
+            raise ValueError(f"Invalid value: {value} for key: {key}")
+        
+        self._locks[key].acquire(timeout=timeout)
+
+        if not self._locks[key].locked():
+            raise TimeoutError(f"Failed to acquire lock for {key}")
+        
+        super().__setitem__(key, value)
+
+        self._locks[key].release()
+    
+    def __getitem__(self, key, timeout:float=0.1) -> any:
+        _Database_Print(f"Getting {key}")
+
+        if key not in self._valid_keys:
+            raise KeyError(f"Invalid key: {key}")
+        
+        self._locks[key].acquire(timeout=timeout)
+
+        if not self._locks[key].locked():
+            raise TimeoutError(f"Failed to acquire lock for {key}")
+        
+        retval = super().__getitem__(key)
+
+        self._locks[key].release()        
+        
+        return retval
+    
+    def register(self, key:str, default:any=None, values:list[any]=None, range:list[any]=None, types:list[type]=any) -> None:
+        if key in self._valid_keys:
+            raise KeyError(f"Key already registered: {key}")
+        
+        _Database_Print(f"Registering {key}\n\tType: {types}\n\tDefault: {default}\n\tValues: {values}\n\tRange: {range}")
+
+        with DatabaseManager() as manager:
+            self._locks[key] = manager.Lock()
+        
+        self._locks[key].acquire()
+
+        self._valid_keys.append(key)
+        self._key_data[key] = self.DatabaseKeyData(values, range, types)
+
+        if not self._key_data[key].validate(default):
+            raise ValueError(f"Invalid default value: {default} for key: {key}")
+        
+        super().__setitem__(key, default)
+        
+        self._locks[key].release()
+
+class DatabaseProxy(DictProxy):
+    def __setitem__(self, key:str, value:any, timeout:float=0.1):
+        self._callmethod("__setitem__", (key, value, timeout))
+        return self
+    
+    def __getitem__(self, key:str, timeout:float=0.1):
+        self._callmethod("__getitem__", (key, timeout))
+        return self
+    
+    def register(self, key:str, default:any=None, values:list[any]=None, range:list[any]=None, types:list[type]=any):
+        self._callmethod("register", (key, types, default, values, range))
+        return self
 
 
 

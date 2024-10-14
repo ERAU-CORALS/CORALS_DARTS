@@ -45,5 +45,3 @@ class DARTS_Process(Process):
                 self._function()
             
             time.sleep(self._period_ms / 1000 + time_ms() - loop_time)
-
-class DARTS_Manager(BaseManager): pass
