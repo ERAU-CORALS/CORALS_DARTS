@@ -4,7 +4,8 @@
 import __main__
 import os
 
-from dotenv import load_dotenv
+from dotenv import find_dotenv
+from dotenv.main import dotenv_values
 
 Debug_Window_Variables = [
     "DEBUG_ATTITUDE_PAGE",
@@ -33,31 +34,44 @@ Debug_Variables = [
 All_Variables = Debug_Variables + Debug_Window_Variables + Debug_Program_Variables
 
 def load_environment():
-    load_dotenv()
+    __main__.Environment = dotenv_values(find_dotenv())
 
     for var in All_Variables:
         if os.getenv(var) == None:
             print(f"Strapping {var} to False")
-            __main__.__dict__[var] = False
+            __main__.Environment[var] = False
         else: 
             try:
-                __main__.__dict__[var] = bool(os.getenv(var))
+                __main__.Environment[var] = bool(os.getenv(var))
             except:
-                __main__.__dict__[var] = False
+                __main__.Environment[var] = False
             finally:
-                print(f"Strapping {var} to {__main__.__dict__[var]}")
+                print(f"Strapping {var} to {__main__.Environment[var]}")
 
-    if __main__.DEBUG:
+    for key in __main__.Arg_Environment:
+        print (f"Overriding {key} with {__main__.Arg_Environment[key]}")
+        try:
+            __main__.Environment[key] = {"True": True, "False": False}[__main__.Arg_Environment[key]]
+        except:
+            try:
+                __main__.Environment[key] = int(__main__.Arg_Environment[key])
+            except:
+                try:
+                    __main__.Environment[key] = float(__main__.Arg_Environment[key])
+                except:
+                    __main__.Environment[key] = __main__.Arg_Environment[key]
+
+    if __main__.Environment["DEBUG"]:
         for var in Debug_Variables:
             print (f"Cascading {var} to True")
-            __main__.__dict__[var] = True
+            __main__.Environment[var] = True
 
-    if __main__.DEBUG_WINDOW:
+    if __main__.Environment["DEBUG_WINDOW"]:
         for var in Debug_Window_Variables:
             print (f"Cascading {var} to True")
-            __main__.__dict__[var] = True
+            __main__.Environment[var] = True
 
-    if __main__.DEBUG_PROGRAM:
+    if __main__.Environment["DEBUG_PROGRAM"]:
         for var in Debug_Program_Variables:
             print (f"Cascading {var} to True")
-            __main__.__dict__[var] = True
+            __main__.Environment[var] = True

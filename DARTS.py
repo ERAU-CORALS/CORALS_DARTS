@@ -1,4 +1,6 @@
 import __main__
+import subprocess
+import sys
 import time
 
 from DARTS_Window import Window
@@ -6,6 +8,85 @@ from DARTS_Process import DummyAttitudeProcess as AttitudeProcess
 from DARTS_Parallel import DARTS_Process as Process
 from DARTS_Database import DatabaseManager as Database
 from DARTS_Environment import load_environment
+
+def DARTS_Common() -> None:
+    __main__.Program_Name = sys.argv[0]
+    split_chars = ['\\', '/']
+    for char in split_chars:
+        if char in __main__.Program_Name:
+            __main__.Program_Name = __main__.Program_Name.split(char)[-1]
+
+    __main__.Program_Type = "GUI_DEFAULT"
+    __main__.Arg_Environment = {}
+    long_environment = False
+
+    for i in range(1, len(sys.argv)):
+        if long_environment:
+            name, value = sys.argv[i].split("=")
+            __main__.Arg_Environment[name] = value
+            long_environment = False
+        elif sys.argv[i] in ["-h", "--help"]:
+            DARTS_Help()
+            exit()
+        elif sys.argv[i] in ["-d", "--database"]:
+            if __main__.Program_Type != "GUI_DEFAULT":
+                raise ValueError("Cannot run DARTS Database Daemon with DARTS GUI")
+            __main__.Program_Type = "DATABASE"
+        elif sys.argv[i] in ["-g", "--gui"]:
+            if __main__.Program_Type != "GUI_DEFAULT":
+                raise ValueError("Cannot run DARTS GUI with DARTS Database Daemon")
+            __main__.Program_Type = "GUI"
+        elif sys.argv[i][0:2] == "-e":
+            name, value = sys.argv[i][2:].split("=")
+            __main__.Arg_Environment[name] = value
+        elif sys.argv[i] == "--env":
+            long_environment = True
+        else:
+            raise ValueError(f"Invalid argument: {sys.argv[i]}")
+        
+    if __main__.Program_Type == "GUI_DEFAULT":
+        command = []
+        if ".py" in __main__.Program_Name:
+            command += ["python"]
+        
+        command += [sys.argv[0], "-d"]
+        command += [f"-e{key}={__main__.Arg_Environment[key]}" for key in __main__.Arg_Environment]
+        
+        subprocess.Popen(command)
+
+    if __main__.Program_Type[0:3] == "GUI":
+        DARTS_GUI()
+
+    elif __main__.Program_Type == "DATABASE":
+        DARTS_Database()
+
+def DARTS_Help() -> None:
+    print(f"Usage: {__main__.Program_Name}")
+    print("Options:")
+    print("  -h            --help           : print this help message and exit")
+    print("  -d            --database       : run DARTS Database Daemon (cannot be run with -g)")
+    print("  -ename=value  --env name=value : set an environment variable (overrides defaults in .env)")
+    print("  -g            --gui            : run DARTS GUI (cannot be run with -d; starts other instance with -d)")
+
+def DARTS_Database() -> None:
+    load_environment()
+
+    from DARTS_Database import DatabaseManager as DatabaseServer
+
+    __main__.Database = DatabaseServer()
+    __main__.DatabaseServer = __main__.Database.get_server()
+    __main__.DatabaseServer.serve_forever()
+
+def DARTS_GUI() -> None:
+    load_environment()
+
+    from DARTS_Database import DatabaseManager as DatabaseClient
+
+    __main__.Database = DatabaseClient()
+    __main__.Database.connect()
+    __main__.Database.initialize(["Attitude", "Target", "Settings"])
+
+    print ("Database Initialized")
 
 def DARTS_Initialize():
     load_environment()
@@ -73,4 +154,5 @@ def DARTS_Initialize():
     __main__.App.mainloop()
 
 if __name__ == '__main__':
-    DARTS_Initialize()
+    print(sys.argv)
+    DARTS_Common()

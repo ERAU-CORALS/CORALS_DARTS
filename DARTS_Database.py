@@ -10,12 +10,12 @@ def _Database_Print(value:str) -> None:
     if __main__.DEBUG_DATABASE:
         print(f"Database: {value}")
 
-default_address = ('localhost', 3141)
-default_key = b''
+default_address = ('localhost', 6280)
+default_key = b'DARTS_Database_Key'
 
 class DatabaseManager(BaseManager):
 
-    def __init__(self, categories:list[str]=None, daemon:bool=False, **kwargs):
+    def __init__(self, **kwargs):
         if 'address' not in kwargs:
             kwargs['address'] = default_address
         
@@ -29,10 +29,8 @@ class DatabaseManager(BaseManager):
         self.register("list", list, ListProxy)
         self.register("Database", DatabaseClass, DatabaseProxy)
 
-        if daemon:
-            self.start()
-
-        self._categories = self.list(categories if categories else [])
+    def initialize(self, categories:list[str]=None):
+        self._categories = self.list()
         self._databases = self.dict()
 
         if categories:
@@ -51,13 +49,22 @@ class DatabaseClass(dict):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        with DatabaseManager() as manager:
-            manager.connect()
-        
-            self._locks = manager.dict()
+        manager = DatabaseManager()
+        manager.connect()
 
-            self._valid_keys = manager.list()
-            self._key_data = manager.dict()
+        print("Connected to Database")
+        
+        self._locks = manager.dict()
+
+        print("Initialized Locks")
+
+        self._valid_keys = manager.list()
+
+        print("Initialized Valid Keys")
+
+        self._key_data = manager.dict()
+
+        print("Initialized Key Data")
 
         self.DEBUG = bool("DEBUG" in kwargs and kwargs["DEBUG"])
     
