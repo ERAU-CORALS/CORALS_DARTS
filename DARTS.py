@@ -84,7 +84,11 @@ def DARTS_GUI() -> None:
 
     __main__.Database = DatabaseClient()
     __main__.Database.connect()
-    __main__.Database.initialize(["Attitude", "Target", "Settings"])
+    __main__.Database.initialize()
+    # __main__.Database.initialize(["Attitude", "Target", "Settings"])
+
+    Database = __main__.Database.Database()
+    __main__.Database["Attitude"] = Database
 
     print ("Database Initialized")
 

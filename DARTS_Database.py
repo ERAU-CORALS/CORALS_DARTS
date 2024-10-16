@@ -10,7 +10,7 @@ def _Database_Print(value:str) -> None:
     if __main__.DEBUG_DATABASE:
         print(f"Database: {value}")
 
-default_address = ('localhost', 6280)
+default_address = ('localhost', 6000)
 default_key = b'DARTS_Database_Key'
 
 class DatabaseManager(BaseManager):
@@ -49,22 +49,17 @@ class DatabaseClass(dict):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        manager = DatabaseManager()
-        manager.connect()
+        # manager = DatabaseManager()
+        # manager.connect()
 
-        print("Connected to Database")
-        
-        self._locks = manager.dict()
+        # self._locks = manager.dict()
+        self._locks = {}
 
-        print("Initialized Locks")
+        # self._valid_keys = manager.list()
+        self._valid_keys = []
 
-        self._valid_keys = manager.list()
-
-        print("Initialized Valid Keys")
-
-        self._key_data = manager.dict()
-
-        print("Initialized Key Data")
+        # self._key_data = manager.dict()
+        self._key_data = {}
 
         self.DEBUG = bool("DEBUG" in kwargs and kwargs["DEBUG"])
     
@@ -74,10 +69,10 @@ class DatabaseClass(dict):
                 raise ValueError(f"Key cannot have both values and range constraints")
             
             with DatabaseManager() as manager:
-                self.values = manager.list(values) if values else None
-                self.range = manager.list(range) if range else None
+                self.values = [values] if values else None
+                self.range = [values] if range else None
 
-                self.types = manager.list(types) if types else None
+                self.types = [values] if types else None
 
         def value_constrained(self) -> bool:
             return self.values is not None
@@ -157,13 +152,6 @@ class DatabaseClass(dict):
         self._locks[key].release()
 
 class DatabaseProxy(DictProxy):
-    def __setitem__(self, key:str, value:any, timeout:float=0.1):
-        self._callmethod("__setitem__", (key, value, timeout))
-        return self
-    
-    def __getitem__(self, key:str, timeout:float=0.1):
-        self._callmethod("__getitem__", (key, timeout))
-        return self
     
     def register(self, key:str, default:any=None, values:list[any]=None, range:list[any]=None, types:list[type]=any):
         self._callmethod("register", (key, types, default, values, range))
