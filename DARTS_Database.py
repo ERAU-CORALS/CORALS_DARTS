@@ -2,12 +2,17 @@
 # The database for the DARTS Application.
 
 import __main__
+import inspect
 from multiprocessing import current_process
 from multiprocessing.managers import SyncManager, DictProxy, MakeProxyType
 
+from DARTS_Environment import load_environment
+
 def _Database_Print(value:str) -> None:
-    if __main__.DEBUG_DATABASE:
-        print(f"Database: {value}")
+    if __main__.Environment["DEBUG_DATABASE"]:
+        parent_frame = inspect.currentframe().f_back
+        print(f"[Database.py({inspect.getframeinfo(parent_frame).lineno}): {parent_frame.f_code.co_name}]\t{value}")
+
 
 default_address = ('localhost', 6000)
 default_key = b'DARTS_Database_Key'
@@ -15,7 +20,16 @@ default_key = b'DARTS_Database_Key'
 class Database(dict):
     
     def __init__(self, categories:list[str]) -> None:
-        super().__init__({cat: __main__.Manager.DatabaseCategory() for cat in categories})
+
+        _Database_Print(f"Creating database with categories: {categories}")
+
+        _Database_Print("Connecting to Database Manager")
+        manager = DatabaseManager()
+        manager.connect()
+
+        _Database_Print("Creating database categories")
+        super().__init__({cat: manager.DatabaseCategory() for cat in categories})
+        _Database_Print("Database categories created")
 
     def _immutable(self, *args, **kwargs) -> None:
         raise TypeError("Database keys are immutable")
@@ -36,13 +50,20 @@ DatabaseProxy = MakeProxyType("DatabaseProxy",
 class DatabaseCategory(dict):
 
     def __init__(self, **kwargs):
+        _Database_Print(f"Creating new Database Category")
         super().__init__(**kwargs)
 
+        _Database_Print(f"Connecting to Database Manager")
         manager = DatabaseManager()
         manager.connect()
 
+        _Database_Print(f"Creating Database Category Locks Dictionary")
         self._locks = manager.dict()
+
+        _Database_Print(f"Creating Database Category Keys List")
         self._valid_keys = manager.list()
+
+        _Database_Print(f"Creating Database Category Key Data Dictionary")
         self._key_data = manager.dict()
 
         self.DEBUG = bool("DEBUG" in kwargs and kwargs["DEBUG"])
@@ -121,7 +142,10 @@ class DatabaseCategory(dict):
         
         _Database_Print(f"Registering {key}\n\tType: {types}\n\tDefault: {default}\n\tValues: {values}\n\tRange: {range}")
 
-        self._locks[key] = __main__.Manager.Lock()
+        manager = DatabaseManager()
+        manager.connect()
+
+        self._locks[key] = manager.Lock()
         
         self._locks[key].acquire()
 

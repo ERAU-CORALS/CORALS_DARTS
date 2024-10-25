@@ -11,7 +11,7 @@ def DARTS_Common() -> None:
         if char in __main__.Program_Name:
             __main__.Program_Name = __main__.Program_Name.split(char)[-1]
 
-    __main__.Program_Type = "GUI_DEFAULT"
+    __main__.Program_Type = "STARTUP_ALL"
     __main__.Arg_Environment = {}
     long_environment = False
 
@@ -24,11 +24,11 @@ def DARTS_Common() -> None:
             DARTS_Help()
             exit()
         elif sys.argv[i] in ["-d", "--database"]:
-            if __main__.Program_Type != "GUI_DEFAULT":
+            if __main__.Program_Type != "STARTUP_ALL":
                 raise ValueError("Cannot run DARTS Database Daemon with DARTS GUI")
             __main__.Program_Type = "DATABASE"
         elif sys.argv[i] in ["-g", "--gui"]:
-            if __main__.Program_Type != "GUI_DEFAULT":
+            if __main__.Program_Type != "STARTUP_ALL":
                 raise ValueError("Cannot run DARTS GUI with DARTS Database Daemon")
             __main__.Program_Type = "GUI"
         elif sys.argv[i][0:2] == "-e":
@@ -39,15 +39,16 @@ def DARTS_Common() -> None:
         else:
             raise ValueError(f"Invalid argument: {sys.argv[i]}")
         
-    if __main__.Program_Type == "GUI_DEFAULT":
+    if __main__.Program_Type == "STARTUP_ALL":
         command = []
         if ".py" in __main__.Program_Name:
             command += ["python"]
+
+        for flag in ["-d", "-g"]:
+            command += [sys.argv[0], flag]
+            command += [f"-e{key}={__main__.Arg_Environment[key]}" for key in __main__.Arg_Environment]
         
-        command += [sys.argv[0], "-d"]
-        command += [f"-e{key}={__main__.Arg_Environment[key]}" for key in __main__.Arg_Environment]
-        
-        subprocess.Popen(command)
+            subprocess.Popen(command)
 
     if __main__.Program_Type[0:3] == "GUI":
         DARTS_GUI()
