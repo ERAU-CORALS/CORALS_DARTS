@@ -24,11 +24,14 @@ class Database(dict):
         _Database_Print(f"Creating database with categories: {categories}")
 
         _Database_Print("Connecting to Database Manager")
-        manager = DatabaseManager()
-        manager.connect()
+        __main__.Manager.connect()
+
+        _Database_Print("Creating Database Category Test Manager")
+        test_manager = __main__.Manager.DatabaseCategory()
+        _Database_Print("Database Category Test Manager created")
 
         _Database_Print("Creating database categories")
-        super().__init__({cat: manager.DatabaseCategory() for cat in categories})
+        super().__init__({cat: __main__.Manager.DatabaseCategory() for cat in categories})
         _Database_Print("Database categories created")
 
     def _immutable(self, *args, **kwargs) -> None:
@@ -53,18 +56,18 @@ class DatabaseCategory(dict):
         _Database_Print(f"Creating new Database Category")
         super().__init__(**kwargs)
 
-        _Database_Print(f"Connecting to Database Manager")
-        manager = DatabaseManager()
-        manager.connect()
+        # _Database_Print(f"Connecting to Database Manager")
+        # __main__.Manager = DatabaseManager()
+        # __main__.Manager.start()
 
         _Database_Print(f"Creating Database Category Locks Dictionary")
-        self._locks = manager.dict()
+        self._locks = {}
 
         _Database_Print(f"Creating Database Category Keys List")
-        self._valid_keys = manager.list()
+        self._valid_keys = []
 
         _Database_Print(f"Creating Database Category Key Data Dictionary")
-        self._key_data = manager.dict()
+        self._key_data = {}
 
         self.DEBUG = bool("DEBUG" in kwargs and kwargs["DEBUG"])
     
@@ -178,5 +181,5 @@ class DatabaseManager(SyncManager):
         
         super().__init__(**kwargs)
 
-        self.register("Database", Database, DatabaseProxy)
-        self.register("DatabaseCategory", DatabaseCategory, DatabaseCategoryProxy)
+DatabaseManager.register("DatabaseCategory", DatabaseCategory, DatabaseCategoryProxy)
+DatabaseManager.register("Database", Database, DatabaseProxy)

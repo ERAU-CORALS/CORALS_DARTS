@@ -69,8 +69,8 @@ def DARTS_Database() -> None:
 
     from DARTS_Database import DatabaseManager
 
-    manager = DatabaseManager()
-    server = manager.get_server()
+    __main__.Manager = DatabaseManager()
+    server = __main__.Manager.get_server()
     server.serve_forever()
 
 def DARTS_GUI() -> None:
@@ -80,6 +80,11 @@ def DARTS_GUI() -> None:
 
     manager = DatabaseManager()
     manager.connect()
+
+    print ("Initializing Database Test Category...")
+    test_category = manager.DatabaseCategory()
+    print ("Database Test Category Initialized")
+    test_category.register("Test", default="Test")
 
     __main__.DARTS_Database = manager.Database(["Attitude", "Target", "Settings"])
 
