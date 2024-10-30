@@ -9,9 +9,8 @@ from multiprocessing.managers import SyncManager, DictProxy, MakeProxyType
 from DARTS_Environment import load_environment
 
 def _Database_Print(value:str) -> None:
-    if __main__.Environment["DEBUG_DATABASE"]:
-        parent_frame = inspect.currentframe().f_back
-        print(f"[Database.py({inspect.getframeinfo(parent_frame).lineno}): {parent_frame.f_code.co_name}]\t{value}")
+    from DARTS_Utilities import Debug_Print
+    Debug_Print(__file__, value, __main__.Environment["DEBUG_DATABASE"])
 
 default_address = ('localhost', __main__.Environment["DATABASE_PORT"])
 default_key = __main__.Environment["DATABASE_KEY"]
@@ -45,10 +44,9 @@ class DatabaseCategory(dict):
             if values and range:
                 raise ValueError(f"Key cannot have both values and range constraints")
             
-            self.values = [values] if values else None
-            self.range = [range] if range else None
-
-            self.types = [types] if types else None
+            self.values = values if values else None
+            self.range = range if range else None
+            self.types = types if types else None
 
         def value_constrained(self) -> bool:
             return self.values is not None

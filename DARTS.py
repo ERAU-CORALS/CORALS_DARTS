@@ -40,20 +40,23 @@ def DARTS_Common() -> None:
             raise ValueError(f"Invalid argument: {sys.argv[i]}")
         
     if __main__.Program_Type == "STARTUP_ALL":
-        command = []
-        if ".py" in __main__.Program_Name:
-            command += ["python"]
-
+        print("Starting all DARTS processes")
         for flag in ["-d", "-g"]:
+            command = []
+            if ".py" in __main__.Program_Name:
+                command += ["python"]
+
             command += [sys.argv[0], flag]
             command += [f"-e{key}={__main__.Arg_Environment[key]}" for key in __main__.Arg_Environment]
         
             subprocess.Popen(command)
 
     if __main__.Program_Type[0:3] == "GUI":
+        print("Starting GUI")
         DARTS_GUI()
 
     elif __main__.Program_Type == "DATABASE":
+        print("Starting Database Daemon")
         DARTS_Database()
 
 def DARTS_Help() -> None:
@@ -82,7 +85,8 @@ def DARTS_GUI() -> None:
     manager = DatabaseManager()
     manager.connect()
 
-    __main__.DARTS_Database = manager.Database(["Attitude", "Target", "Settings"])
+    __main__.DARTS_Database = manager.Database({cat: manager.DatabaseCategory() for cat in 
+                                                ("Attitude", "Target", "Settings")})
     __main__.DARTS_Database["Attitude"].register \
         ("Current", default={"RPY Angles": [0, 0, 0],
                              "Euler Parameters": {"axis": [0, 0, 0], "angle": 0},
@@ -90,9 +94,9 @@ def DARTS_GUI() -> None:
                              "Quaternion": [0, 0, 0, 1]},
                     types=[dict])
     __main__.DARTS_Database["Attitude"].register \
-        ("Plot_StartTime", default=time.time(), types=[float])
+        ("Plot_StartTime", default=time.time(), types=[int, float])
     __main__.DARTS_Database["Attitude"].register \
-        ("Plot_TimeLength", default=60, types=[float])
+        ("Plot_TimeLength", default=60, types=[int, float])
     __main__.DARTS_Database["Attitude"].register \
         ("Plot_TimeData", default=[], types=[list])
     __main__.DARTS_Database["Attitude"].register \
@@ -118,7 +122,7 @@ def DARTS_GUI() -> None:
     __main__.DARTS_Database["Settings"].register \
         ("QuaternionType", default="Q4", values=["Q0", "Q4"], types=[str])
     
-    from DARTS_GUI import Window
+    from DARTS_Window import Window
 
     __main__.App = Window()
     __main__.App.mainloop()

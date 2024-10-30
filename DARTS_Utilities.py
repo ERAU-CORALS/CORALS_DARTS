@@ -14,6 +14,12 @@ from scipy.spatial.transform import Rotation as rot
 #
 ########################################################################
 
+def Debug_Print(file: str, value:str, condition:bool=True) -> None:
+    if condition:
+        import inspect
+        parent_frame = inspect.currentframe().f_back
+        print(f"[{file}({inspect.getframeinfo(parent_frame).lineno}): {parent_frame.f_code.co_name}]\t{value}")
+
 def StartTestbed() -> None:
     # Start Attitude Logging
     api.Attitude_Plot_Set_StartTime(time.time())
