@@ -1,9 +1,7 @@
 # Darts_Parallel.py
 # The multiprocessing class for the DARTS Application.
 
-import __main__
 from multiprocessing import Process
-from multiprocessing.managers import BaseManager
 import time
 
 from DARTS_Environment import load_environment
@@ -12,8 +10,8 @@ def time_ms() -> int:
     return int(time.time() * 1000)
 
 class DARTS_Process(Process):
-    def __init__(self, function, period_ms:int, **kwargs):
-        super().__init__(target=self._loop, **kwargs)
+    def __init__(self, function, period_ms:int, name:str=None, args=(), kwargs={}):
+        super().__init__(target=self._loop, name=name, args=args, kwargs=kwargs)
 
         self._function = function
         self._period_ms = period_ms
@@ -34,8 +32,11 @@ class DARTS_Process(Process):
     def stop(self):
         self._runnable = False
 
-    def _loop(self):
+    def _loop(self, *args, **kwargs):
         load_environment()
+        __main__.DARTS_Database = args[0]
+        for key in kwargs:
+            setattr(__main__, key, kwargs[key])
 
         while self._runnable:
             

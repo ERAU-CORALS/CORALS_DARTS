@@ -36,7 +36,7 @@ def DummyAttitude():
         api.Attitude_Plot_Pop_AttitudeData()
 
 def DummyAttitudeProcess():
-    _Process_Print ("Dummy Process")
+    _Process_Print ("Dummy Attitude Process")
 
     print(f"Halt State: {api.Settings_Get_Halt()}")
 

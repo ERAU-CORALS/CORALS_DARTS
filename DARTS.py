@@ -120,12 +120,33 @@ def DARTS_GUI() -> None:
     __main__.DARTS_Database["Settings"].register \
         ("QuaternionType", default="Q4", values=["Q0", "Q4"], types=[str])
     
+    from DARTS_Parallel import DARTS_Process as Process
+    from DARTS_Process import DummyAttitudeProcess as AttitudeProcess
+
+    processes = {
+        "Attitude": Process(AttitudeProcess, 200, name="Attitude", args=(__main__.DARTS_Database,), kwargs={"Arg_Environment": __main__.Arg_Environment}),
+        # "Blinky" : Process(lambda: print("Blinky"), 1000, name="Blinky"),
+    }
+
     from DARTS_Window import Window
 
+    def Start_Processes(processes: dict[str, Process]) -> None:
+        for key in processes:
+            print(f"Starting {key} thread...")
+            processes[key].start()
+            print(f"{key} thread started...")
+
+    def Stop_Processes(processes: dict[str, Process]) -> None:
+        for key in processes:
+            print(f"Stopping {key} thread...")
+            processes[key].stop()
+            print(f"{key} thread stopped...")
+
     __main__.App = Window()
+    __main__.App.after(1000, lambda: Start_Processes(processes))
     __main__.App.mainloop()
 
-    print ("Database Initialized")
+    Stop_Processes(processes)
 
 # def DARTS_Initialize():
 #     load_environment()
