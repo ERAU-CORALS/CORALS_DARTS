@@ -3,13 +3,11 @@ import subprocess
 import sys
 
 from DARTS_Environment import load_environment
+from DARTS_Utilities import Path_Truncate
 
 def DARTS_Common() -> None:
     __main__.Program_Name = sys.argv[0]
-    split_chars = ['\\', '/']
-    for char in split_chars:
-        if char in __main__.Program_Name:
-            __main__.Program_Name = __main__.Program_Name.split(char)[-1]
+    __main__.Program_Name = Path_Truncate(__main__.Program_Name)
 
     __main__.Program_Type = "STARTUP_ALL"
     __main__.Arg_Environment = {}

@@ -21,10 +21,6 @@ class DatabaseCategory(dict):
         _Database_Print(f"Creating new Database Category")
         super().__init__(**kwargs)
 
-        # _Database_Print(f"Connecting to Database Manager")
-        # __main__.Manager = DatabaseManager()
-        # __main__.Manager.start()
-
         _Database_Print(f"Creating Database Category Locks Dictionary")
         self._locks = {}
 
@@ -44,6 +40,7 @@ class DatabaseCategory(dict):
             if values and range:
                 raise ValueError(f"Key cannot have both values and range constraints")
             
+            _Database_Print(f"Setting Database Key Data Constraints")
             self.values = values if values else None
             self.range = range if range else None
             self.types = types if types else None
@@ -60,10 +57,10 @@ class DatabaseCategory(dict):
         def validate(self, value:any) -> bool:
             retval = True
             if self.value_constrained():
-                _Database_Print(f"Validating value: {value} in {self.values}")
+                _Database_Print(f"Validating value: {value} in set {self.values}")
                 retval = value in self.values
             elif self.range_constrained():
-                _Database_Print(f"Validating value: {value} in {self.range}")
+                _Database_Print(f"Validating value: {value} in range {self.range}")
                 retval = self.range[0] <= value <= self.range[1]
             
             if retval and self.type_constrained():

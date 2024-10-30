@@ -17,9 +17,8 @@ import DARTS_API as api
 import DARTS_Utilities as util
 from DARTS_Render import DARTS_RenderingFrame
 
-def _Attitude_Print(value:str) -> None:
-    if __main__.DEBUG_ATTITUDE_PAGE:
-        print(f"Attitude Page: {value}")
+def _Attitude_Print(value: str):
+    util.Debug_Print(__file__, value, __main__.Environment["DEBUG_ATTITUDE_PAGE"])
 
 def _Attitude_Active() -> bool:
     return __main__.App.MainFrame.MainTabs.get() == "Attitude"

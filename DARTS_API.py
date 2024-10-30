@@ -5,9 +5,8 @@ import __main__
 
 import DARTS_Utilities as util
 
-def _API_Print(value:str) -> None:
-    if __main__.DEBUG_API:
-        print(f"API: {value}")
+def _API_Print(value: str): 
+    util.Debug_Print(__file__, value, __main__.Environment["DEBUG_API"])
 
 ########################################################################
 #

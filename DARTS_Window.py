@@ -17,9 +17,8 @@ from DARTS_Debug import DebugFrame
 import DARTS_API as api
 import DARTS_Utilities as util
 
-def _Window_Print(value:str) -> None:
-    if __main__.DEBUG_WINDOW:
-        print(f"Window: {value}")
+def _Window_Print(value: str): 
+    util.Debug_Print(__file__, value, __main__.Environment["DEBUG_WINDOW"])
 
 class Window(CTk):
     def __init__(self):

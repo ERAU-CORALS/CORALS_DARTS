@@ -14,9 +14,9 @@ import numpy as np
 from scipy.spatial.transform import Rotation as R
 
 def _Render_Print(value:str) -> None:
-    if __main__.DEBUG_RENDERING:
-        print(f"Render: {value}")
-
+    from DARTS_Utilities import Debug_Print
+    Debug_Print(__file__, value, __main__.Environment["DEBUG_RENDERING"])
+    
 class DARTS_RenderingFrame(CTkFrame):
     def __init__(self, master, **kwargs):
         _Render_Print("Initializing Attitude Rendering Frame")

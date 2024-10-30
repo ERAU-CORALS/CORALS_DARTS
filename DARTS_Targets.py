@@ -15,9 +15,8 @@ import DARTS_API as api
 import DARTS_Utilities as util
 from DARTS_Render import DARTS_RenderingFrame
 
-def _Targets_Print(value:str) -> None:
-    if __main__.DEBUG_TARGETS_PAGE:
-        print(f"Targets: {value}")
+def _Targets_Print(value: str): 
+    util.Debug_Print(__file__, value, __main__.Environment["DEBUG_TARGETS_PAGE"])
 
 class TargetsFrame(CTkFrame):
     def __init__(self, master, **kwargs):
