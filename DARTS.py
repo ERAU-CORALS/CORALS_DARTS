@@ -69,24 +69,59 @@ def DARTS_Database() -> None:
 
     from DARTS_Database import DatabaseManager
 
-    __main__.Manager = DatabaseManager()
-    server = __main__.Manager.get_server()
+    manager = DatabaseManager()
+    server = manager.get_server()
     server.serve_forever()
 
 def DARTS_GUI() -> None:
     load_environment()
 
+    import time
     from DARTS_Database import DatabaseManager
 
     manager = DatabaseManager()
     manager.connect()
 
-    print ("Initializing Database Test Category...")
-    test_category = manager.DatabaseCategory()
-    print ("Database Test Category Initialized")
-    test_category.register("Test", default="Test")
-
     __main__.DARTS_Database = manager.Database(["Attitude", "Target", "Settings"])
+    __main__.DARTS_Database["Attitude"].register \
+        ("Current", default={"RPY Angles": [0, 0, 0],
+                             "Euler Parameters": {"axis": [0, 0, 0], "angle": 0},
+                             "Gibbs-Rodriguez": [0, 0, 0],
+                             "Quaternion": [0, 0, 0, 1]},
+                    types=[dict])
+    __main__.DARTS_Database["Attitude"].register \
+        ("Plot_StartTime", default=time.time(), types=[float])
+    __main__.DARTS_Database["Attitude"].register \
+        ("Plot_TimeLength", default=60, types=[float])
+    __main__.DARTS_Database["Attitude"].register \
+        ("Plot_TimeData", default=[], types=[list])
+    __main__.DARTS_Database["Attitude"].register \
+        ("Plot_AttitudeData", default={"RPY Angles": [[],[],[]],
+                                        "Euler Parameters": {"axis": [[],[],[]], "angle": []},
+                                        "Gibbs-Rodriguez": [[],[],[]],
+                                        "Quaternion": [[],[],[],[]]},
+                      types=[dict])
+    __main__.DARTS_Database["Attitude"].register \
+        ("Plot_DisplayType", default="RPY Angles",
+                             values=["RPY Angles", "Euler Parameters", "Gibbs-Rodriguez", "Quaternion"],
+                             types=[str])
+    
+    __main__.DARTS_Database["Target"].register \
+        ("List", default=[], types=[list])
+    __main__.DARTS_Database["Target"].register \
+        ("Indices", default=[], types=[list])
+    
+    __main__.DARTS_Database["Settings"].register \
+        ("Halt", default=True, values=[True, False], types=[bool])
+    __main__.DARTS_Database["Settings"].register \
+        ("AngleType", default="Degrees", values=["Degrees", "Radians"], types=[str])
+    __main__.DARTS_Database["Settings"].register \
+        ("QuaternionType", default="Q4", values=["Q0", "Q4"], types=[str])
+    
+    from DARTS_GUI import Window
+
+    __main__.App = Window()
+    __main__.App.mainloop()
 
     print ("Database Initialized")
 

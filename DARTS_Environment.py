@@ -31,22 +31,44 @@ Debug_Variables = [
     "DEBUG_WINDOW",
 ]
 
-All_Variables = Debug_Variables + Debug_Window_Variables + Debug_Program_Variables
+All_Debug_Variables = Debug_Variables + Debug_Window_Variables + Debug_Program_Variables
+
+Database_Variables = {
+    "DATABASE_PORT":            6000,
+    "DATABASE_KEY":             b'DARTS_Database_Key',
+    "DATABASE_LOCK_TIMEOUT":    0.1,
+}
+
+All_Settings_Variables = Database_Variables.copy()
 
 def load_environment():
     __main__.Environment = dotenv_values(find_dotenv())
 
-    for var in All_Variables:
+    for var in All_Debug_Variables:
         if os.getenv(var) == None:
-            print(f"Strapping {var} to False")
             __main__.Environment[var] = False
         else: 
             try:
                 __main__.Environment[var] = bool(os.getenv(var))
             except:
                 __main__.Environment[var] = False
-            finally:
-                print(f"Strapping {var} to {__main__.Environment[var]}")
+        print(f"Strapping {var} to {__main__.Environment[var]}")
+
+    for var in All_Settings_Variables:
+        if os.getenv(var) == None:
+            __main__.Environment[var] = All_Settings_Variables[var]
+        else:
+            try:
+                __main__.Environment[var] = {"True": True, "False": False}[os.getenv(var)]
+            except:
+                try:
+                    __main__.Environment[var] = int(os.getenv(var))
+                except:
+                    try:
+                        __main__.Environment[var] = float(os.getenv(var))
+                    except:
+                        __main__.Environment[var] = os.getenv(var)
+        print(f"Strapping {var} to {__main__.Environment[var]}")
 
     for key in __main__.Arg_Environment:
         print (f"Overriding {key} with {__main__.Arg_Environment[key]}")
@@ -75,3 +97,4 @@ def load_environment():
         for var in Debug_Program_Variables:
             print (f"Cascading {var} to True")
             __main__.Environment[var] = True
+

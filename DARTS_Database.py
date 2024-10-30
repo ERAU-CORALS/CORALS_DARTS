@@ -3,7 +3,7 @@
 
 import __main__
 import inspect
-from multiprocessing import current_process
+from multiprocessing import current_process, Lock, get_context
 from multiprocessing.managers import SyncManager, DictProxy, MakeProxyType
 
 from DARTS_Environment import load_environment
@@ -13,42 +13,8 @@ def _Database_Print(value:str) -> None:
         parent_frame = inspect.currentframe().f_back
         print(f"[Database.py({inspect.getframeinfo(parent_frame).lineno}): {parent_frame.f_code.co_name}]\t{value}")
 
-
-default_address = ('localhost', 6000)
-default_key = b'DARTS_Database_Key'
-
-class Database(dict):
-    
-    def __init__(self, categories:list[str]) -> None:
-
-        _Database_Print(f"Creating database with categories: {categories}")
-
-        _Database_Print("Connecting to Database Manager")
-        __main__.Manager.connect()
-
-        _Database_Print("Creating Database Category Test Manager")
-        test_manager = __main__.Manager.DatabaseCategory()
-        _Database_Print("Database Category Test Manager created")
-
-        _Database_Print("Creating database categories")
-        super().__init__({cat: __main__.Manager.DatabaseCategory() for cat in categories})
-        _Database_Print("Database categories created")
-
-    def _immutable(self, *args, **kwargs) -> None:
-        raise TypeError("Database keys are immutable")
-    
-    __setitem__ = _immutable
-    __delitem__ = _immutable
-    clear       = _immutable
-    update      = _immutable
-    setdefault  = _immutable
-    pop         = _immutable
-    popitem     = _immutable
-
-DatabaseProxy = MakeProxyType("DatabaseProxy", 
-                              ('__contains__', '__getitem__', '__iter__',  
-                               '__len__', 'copy', 'get', 'items', 
-                               'keys', 'values'))
+default_address = ('localhost', __main__.Environment["DATABASE_PORT"])
+default_key = __main__.Environment["DATABASE_KEY"]
 
 class DatabaseCategory(dict):
 
@@ -74,14 +40,15 @@ class DatabaseCategory(dict):
     class DatabaseKeyData:
 
         def __init__(self, values:list[any]=None, range:list[any]=None, types:list[type]=None):
+            _Database_Print(f"Creating Database Key Data\n\tValues: {values}\n\tRange: {range}\n\tTypes: {types}")
+
             if values and range:
                 raise ValueError(f"Key cannot have both values and range constraints")
             
-            with DatabaseManager() as manager:
-                self.values = [values] if values else None
-                self.range = [values] if range else None
+            self.values = [values] if values else None
+            self.range = [range] if range else None
 
-                self.types = [values] if types else None
+            self.types = [types] if types else None
 
         def value_constrained(self) -> bool:
             return self.values is not None
@@ -90,21 +57,25 @@ class DatabaseCategory(dict):
             return self.range is not None
         
         def type_constrained(self) -> bool:
-            return self.types is not None
+            return self.types is not None and self.types is not any
         
         def validate(self, value:any) -> bool:
             retval = True
             if self.value_constrained():
+                _Database_Print(f"Validating value: {value} in {self.values}")
                 retval = value in self.values
             elif self.range_constrained():
+                _Database_Print(f"Validating value: {value} in {self.range}")
                 retval = self.range[0] <= value <= self.range[1]
             
             if retval and self.type_constrained():
+                _Database_Print(f"Validating type: {type(value)} in {self.types}")
                 retval = type(value) in self.types
             
+            _Database_Print(f"Validation result: {retval}")
             return retval
 
-    def __setitem__(self, key:str, value:any, timeout:float=0.1):
+    def __setitem__(self, key:str, value:any, timeout:float=__main__.Environment["DATABASE_LOCK_TIMEOUT"]) -> None:
         _Database_Print(f"Setting {key} to {value}")
 
         if key not in self._valid_keys:
@@ -113,61 +84,114 @@ class DatabaseCategory(dict):
         if not self._key_data[key].validate(value):
             raise ValueError(f"Invalid value: {value} for key: {key}")
         
-        self._locks[key].acquire(timeout=timeout)
-
-        if not self._locks[key].locked():
+        if not self._locks[key].acquire(timeout=timeout):
             raise TimeoutError(f"Failed to acquire lock for {key}")
         
         super().__setitem__(key, value)
 
         self._locks[key].release()
     
-    def __getitem__(self, key, timeout:float=0.1) -> any:
-        _Database_Print(f"Getting {key}")
+    def __getitem__(self, key, timeout:float=__main__.Environment["DATABASE_LOCK_TIMEOUT"]) -> any:
+        _Database_Print(f"Getting value of {key}")
 
         if key not in self._valid_keys:
             raise KeyError(f"Invalid key: {key}")
-        
-        self._locks[key].acquire(timeout=timeout)
 
-        if not self._locks[key].locked():
+        if not self._locks[key].acquire(timeout=timeout):
             raise TimeoutError(f"Failed to acquire lock for {key}")
         
         retval = super().__getitem__(key)
 
-        self._locks[key].release()        
+        self._locks[key].release() 
         
         return retval
     
-    def register(self, key:str, default:any=None, values:list[any]=None, range:list[any]=None, types:list[type]=any) -> None:
+    def register(self, key:str, default:any=None, values:list[any]=None, range:list[any]=None, types:list[type]=None) -> None:
+        _Database_Print(f"Registering {key}\n\tType: {types}\n\tDefault: {default}\n\tValues: {values}\n\tRange: {range}")
+        
         if key in self._valid_keys:
             raise KeyError(f"Key already registered: {key}")
+
+        _Database_Print(f"Creating lock for {key}")
+        self._locks[key] = Lock()
         
-        _Database_Print(f"Registering {key}\n\tType: {types}\n\tDefault: {default}\n\tValues: {values}\n\tRange: {range}")
+        _Database_Print(f"Acquiring lock for {key}")
+        if not self._locks[key].acquire():
+            raise PermissionError(f"Failed to acquire lock for {key}")
 
-        manager = DatabaseManager()
-        manager.connect()
-
-        self._locks[key] = manager.Lock()
-        
-        self._locks[key].acquire()
-
+        _Database_Print(f"Creating key data for {key}")
         self._valid_keys.append(key)
         self._key_data[key] = self.DatabaseKeyData(values, range, types)
 
+        _Database_Print(f"Validating default data for {key}")
         if not self._key_data[key].validate(default):
             raise ValueError(f"Invalid default value: {default} for key: {key}")
         
+        _Database_Print(f"Setting default value for {key}")
         super().__setitem__(key, default)
         
+        _Database_Print(f"Releasing lock for {key}")
         self._locks[key].release()
 
-DatabaseCategoryProxy = MakeProxyType("DatabaseCategoryProxy", 
-                                      ('__contains__', '__delitem__', 
-                                       '__getitem__', '__iter__', '__len__',
-                                       '__setitem__', 'clear', 'copy', 'get', 
-                                       'items', 'keys', 'pop', 'popitem', 
-                                       'setdefault', 'update', 'values', 'register'))
+class DatabaseCategoryProxy(DictProxy):
+    _exposed_ = ('__contains__', '__delitem__', 
+                 '__getitem__', '__iter__', '__len__',
+                 '__setitem__', 'clear', 'copy', 'get', 
+                 'items', 'keys', 'pop', 'popitem', 
+                 'setdefault', 'update', 'values', 'register')
+    
+    def register(self, key:str, default:any=None, values:list[any]=None, range:list[any]=None, types:list[type]=None) -> None:
+        return self._callmethod('register', (key, default, values, range, types,))
+    
+
+class Database(dict):
+    
+    def __init__(self, categories: dict=None) -> None:
+
+        _Database_Print(f"Creating new database with categories: {categories.keys() if categories else None}")
+
+        _Database_Print("Attaching database categories")
+        super().__init__(categories if categories else {})
+        _Database_Print("Database categories attached")
+    
+    def attach(self, name: str, CategoryProxy:DatabaseCategoryProxy) -> None:
+        _Database_Print(f"Attaching category {CategoryProxy}")
+
+        if name in self:
+            raise KeyError(f"Category already attached: {name}")
+        
+        super().__setitem__(name, CategoryProxy)
+
+    def _immutable(self, *args, **kwargs) -> None:
+        raise TypeError("Database keys are immutable")
+    
+    __setitem__ = _immutable
+    __delitem__ = _immutable
+    clear       = _immutable
+    update      = _immutable
+    setdefault  = _immutable
+    pop         = _immutable
+    popitem     = _immutable
+
+class DatabaseProxy(DictProxy): 
+    _exposed_ = ('__contains__', '__getitem__', '__iter__',  
+                 '__len__', 'copy', 'get', 'items', 
+                 'keys', 'values', 'attach')
+    
+    def attach(self, name: str, CategoryProxy:DatabaseCategoryProxy) -> None:
+        return self._callmethod('attach', (name, CategoryProxy,))
+
+    def _immutable(self, *args, **kwargs) -> None:
+        raise TypeError("Database keys are immutable")
+    
+    __setitem__ = _immutable
+    __delitem__ = _immutable
+    clear       = _immutable
+    update      = _immutable
+    setdefault  = _immutable
+    pop         = _immutable
+    popitem     = _immutable
+
 class DatabaseManager(SyncManager):
 
     def __init__(self, **kwargs):
