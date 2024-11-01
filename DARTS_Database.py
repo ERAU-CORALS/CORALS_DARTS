@@ -2,18 +2,23 @@
 # The database for the DARTS Application.
 
 import __main__
-import inspect
 from multiprocessing import current_process, Lock, get_context
 from multiprocessing.managers import SyncManager, DictProxy, MakeProxyType
 
 from DARTS_Environment import load_environment
 
+DARTS_Environment = __main__.Environment if "Environment" in __main__.__dict__ else load_environment({})
+
 def _Database_Print(value:str) -> None:
     from DARTS_Utilities import Debug_Print
-    Debug_Print(__file__, value, __main__.Environment["DEBUG_DATABASE"])
+    Debug_Print(__file__, value, (DARTS_Environment if DARTS_Environment else __main__.Environment)["DEBUG_DATABASE"])
 
-default_address = ('localhost', __main__.Environment["DATABASE_PORT"])
-default_key = __main__.Environment["DATABASE_KEY"]
+def Database_Initialize(Environment:dict) -> None:
+    global DARTS_Environment
+    DARTS_Environment = Environment
+
+default_address = ('localhost', DARTS_Environment["DATABASE_PORT"])
+default_key = DARTS_Environment["DATABASE_KEY"]
 
 class DatabaseCategory(dict):
 
@@ -70,7 +75,7 @@ class DatabaseCategory(dict):
             _Database_Print(f"Validation result: {retval}")
             return retval
 
-    def __setitem__(self, key:str, value:any, timeout:float=__main__.Environment["DATABASE_LOCK_TIMEOUT"]) -> None:
+    def __setitem__(self, key:str, value:any, timeout:float=DARTS_Environment["DATABASE_LOCK_TIMEOUT"]) -> None:
         _Database_Print(f"Setting {key} to {value}")
 
         if key not in self._valid_keys:
@@ -86,7 +91,7 @@ class DatabaseCategory(dict):
 
         self._locks[key].release()
     
-    def __getitem__(self, key, timeout:float=__main__.Environment["DATABASE_LOCK_TIMEOUT"]) -> any:
+    def __getitem__(self, key, timeout:float=DARTS_Environment["DATABASE_LOCK_TIMEOUT"]) -> any:
         _Database_Print(f"Getting value of {key}")
 
         if key not in self._valid_keys:

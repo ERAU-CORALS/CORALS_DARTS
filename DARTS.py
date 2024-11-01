@@ -65,8 +65,11 @@ def DARTS_Help() -> None:
     print("  -ename=value  --env name=value : set an environment variable (overrides defaults in .env)")
     print("  -g            --gui            : run DARTS GUI (cannot be run with -d; starts other instance with -d)")
 
+def Blinky(*args, **kwargs) -> None:
+    print("Blinky")
+
 def DARTS_Database() -> None:
-    load_environment()
+    load_environment(__main__.Arg_Environment)
 
     from DARTS_Database import DatabaseManager
 
@@ -75,7 +78,7 @@ def DARTS_Database() -> None:
     server.serve_forever()
 
 def DARTS_GUI() -> None:
-    load_environment()
+    load_environment(__main__.Arg_Environment)
 
     import time
     from DARTS_Database import DatabaseManager
@@ -83,52 +86,55 @@ def DARTS_GUI() -> None:
     manager = DatabaseManager()
     manager.connect()
 
-    __main__.DARTS_Database = manager.Database({cat: manager.DatabaseCategory() for cat in 
+    DARTS_Environment = manager.dict(load_environment(__main__.Arg_Environment))
+
+    DARTS_Database = manager.Database({cat: manager.DatabaseCategory() for cat in 
                                                 ("Attitude", "Target", "Settings")})
-    __main__.DARTS_Database["Attitude"].register \
+    DARTS_Database["Attitude"].register \
         ("Current", default={"RPY Angles": [0, 0, 0],
                              "Euler Parameters": {"axis": [0, 0, 0], "angle": 0},
                              "Gibbs-Rodriguez": [0, 0, 0],
                              "Quaternion": [0, 0, 0, 1]},
                     types=[dict])
-    __main__.DARTS_Database["Attitude"].register \
+    DARTS_Database["Attitude"].register \
         ("Plot_StartTime", default=time.time(), types=[int, float])
-    __main__.DARTS_Database["Attitude"].register \
+    DARTS_Database["Attitude"].register \
         ("Plot_TimeLength", default=60, types=[int, float])
-    __main__.DARTS_Database["Attitude"].register \
+    DARTS_Database["Attitude"].register \
         ("Plot_TimeData", default=[], types=[list])
-    __main__.DARTS_Database["Attitude"].register \
+    DARTS_Database["Attitude"].register \
         ("Plot_AttitudeData", default={"RPY Angles": [[],[],[]],
                                         "Euler Parameters": {"axis": [[],[],[]], "angle": []},
                                         "Gibbs-Rodriguez": [[],[],[]],
                                         "Quaternion": [[],[],[],[]]},
                       types=[dict])
-    __main__.DARTS_Database["Attitude"].register \
+    DARTS_Database["Attitude"].register \
         ("Plot_DisplayType", default="RPY Angles",
                              values=["RPY Angles", "Euler Parameters", "Gibbs-Rodriguez", "Quaternion"],
                              types=[str])
     
-    __main__.DARTS_Database["Target"].register \
+    DARTS_Database["Target"].register \
         ("List", default=[], types=[list])
-    __main__.DARTS_Database["Target"].register \
+    DARTS_Database["Target"].register \
         ("Indices", default=[], types=[list])
     
-    __main__.DARTS_Database["Settings"].register \
+    DARTS_Database["Settings"].register \
         ("Halt", default=True, values=[True, False], types=[bool])
-    __main__.DARTS_Database["Settings"].register \
+    DARTS_Database["Settings"].register \
         ("AngleType", default="Degrees", values=["Degrees", "Radians"], types=[str])
-    __main__.DARTS_Database["Settings"].register \
+    DARTS_Database["Settings"].register \
         ("QuaternionType", default="Q4", values=["Q0", "Q4"], types=[str])
+    
+    from DARTS_API import API_Initialize
+    API_Initialize(DARTS_Database)
     
     from DARTS_Parallel import DARTS_Process as Process
     from DARTS_Process import DummyAttitudeProcess as AttitudeProcess
 
     processes = {
-        "Attitude": Process(AttitudeProcess, 200, name="Attitude", args=(__main__.DARTS_Database,), kwargs={"Arg_Environment": __main__.Arg_Environment}),
-        # "Blinky" : Process(lambda: print("Blinky"), 1000, name="Blinky"),
+        "Attitude": Process(AttitudeProcess, 1000, name="Attitude", Database=DARTS_Database, Environment=DARTS_Environment),
+        "Blinky" : Process(Blinky, 1000, name="Blinky"),
     }
-
-    from DARTS_Window import Window
 
     def Start_Processes(processes: dict[str, Process]) -> None:
         for key in processes:
@@ -142,8 +148,11 @@ def DARTS_GUI() -> None:
             processes[key].stop()
             print(f"{key} thread stopped...")
 
+    Start_Processes(processes)
+
+    from DARTS_Window import Window
+
     __main__.App = Window()
-    __main__.App.after(1000, lambda: Start_Processes(processes))
     __main__.App.mainloop()
 
     Stop_Processes(processes)

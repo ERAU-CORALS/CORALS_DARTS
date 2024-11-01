@@ -41,7 +41,7 @@ Database_Variables = {
 
 All_Settings_Variables = Database_Variables.copy()
 
-def load_environment():
+def load_environment(Arg_Environment:dict) -> dict:
     __main__.Environment = dotenv_values(find_dotenv())
 
     for var in All_Debug_Variables:
@@ -70,18 +70,18 @@ def load_environment():
                         __main__.Environment[var] = os.getenv(var)
         print(f"Strapping {var} to {__main__.Environment[var]}")
 
-    for key in __main__.Arg_Environment:
-        print (f"Overriding {key} with {__main__.Arg_Environment[key]}")
+    for key in Arg_Environment:
+        print (f"Overriding {key} with {Arg_Environment[key]}")
         try:
-            __main__.Environment[key] = {"True": True, "False": False}[__main__.Arg_Environment[key]]
+            __main__.Environment[key] = {"True": True, "False": False}[Arg_Environment[key]]
         except:
             try:
-                __main__.Environment[key] = int(__main__.Arg_Environment[key])
+                __main__.Environment[key] = int(Arg_Environment[key])
             except:
                 try:
-                    __main__.Environment[key] = float(__main__.Arg_Environment[key])
+                    __main__.Environment[key] = float(Arg_Environment[key])
                 except:
-                    __main__.Environment[key] = __main__.Arg_Environment[key]
+                    __main__.Environment[key] = Arg_Environment[key]
 
     if __main__.Environment["DEBUG"]:
         for var in Debug_Variables:
@@ -97,4 +97,6 @@ def load_environment():
         for var in Debug_Program_Variables:
             print (f"Cascading {var} to True")
             __main__.Environment[var] = True
+
+    return __main__.Environment
 
