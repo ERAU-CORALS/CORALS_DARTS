@@ -105,7 +105,7 @@ class AttitudeTimeGraphFrame(CTkFrame):
         if _Attitude_Active():
             self.draw_data_callback()
 
-        self.after(200, self.draw_data_process)
+        self.after(1000, self.draw_data_process)
 
     def draw_data_callback(self):  
         _Attitude_Print("Drawing Data Callback")
@@ -123,6 +123,11 @@ class AttitudeTimeGraphFrame(CTkFrame):
             if util.AttitudePlot_IsRPYAngles():
 
                 [roll_data, pitch_data, yaw_data] = api.Attitude_Plot_Get_AttitudeData(type="RPY Angles")
+
+                del roll_data[len(time_data):]
+                del pitch_data[len(time_data):]
+                del yaw_data[len(time_data):]
+
                 legend_entries = []
                 
                 if self.Settings.RollCheckbox.get():
@@ -164,6 +169,12 @@ class AttitudeTimeGraphFrame(CTkFrame):
                 euler_data = api.Attitude_Plot_Get_AttitudeData(type="Euler Parameters")
                 [e1_data, e2_data, e3_data] = euler_data["axis"]
                 phi_data = euler_data["angle"]
+
+                del e1_data[len(time_data):]
+                del e2_data[len(time_data):]
+                del e3_data[len(time_data):]
+                del phi_data[len(time_data):]
+
                 legend_entries = []
 
                 if self.Settings.E1Checkbox.get():
@@ -208,6 +219,11 @@ class AttitudeTimeGraphFrame(CTkFrame):
             elif util.AttitudePlot_IsGibbsRodriguez():
 
                 [p1_data, p2_data, p3_data] = api.Attitude_Plot_Get_AttitudeData(type="Gibbs-Rodriguez")
+
+                del p1_data[len(time_data):]
+                del p2_data[len(time_data):]
+                del p3_data[len(time_data):]
+
                 legend_entries = []
 
                 if self.Settings.P1Checkbox.get():
@@ -232,6 +248,12 @@ class AttitudeTimeGraphFrame(CTkFrame):
             elif util.AttitudePlot_IsQuaternion():
 
                 [q1_data, q2_data, q3_data, q4_data] = api.Attitude_Plot_Get_AttitudeData(type="Quaternion")
+
+                del q1_data[len(time_data):]
+                del q2_data[len(time_data):]
+                del q3_data[len(time_data):]
+                del q4_data[len(time_data):]
+                
                 legend_entries = []
 
                 if self.Settings.Q0Checkbox.get() and api.Settings_Get_QuaternionType() == "Q0":

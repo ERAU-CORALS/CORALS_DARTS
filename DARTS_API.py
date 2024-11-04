@@ -77,16 +77,21 @@ def Attitude_Plot_Get_TimeData() -> list[float]:
     return DARTS_Database["Attitude"]["Plot_TimeData"]
 
 def Attitude_Plot_Push_TimeData(value:list[float]) -> None:
-    _API_Print(f"Setting Attitude Plot Time Data to {value}")
-    DARTS_Database["Attitude"]["Plot_TimeData"].append(value)
+    _API_Print(f"Pusing {value} to Attitude Plot Time Data")
+    new_data = list(DARTS_Database["Attitude"]["Plot_TimeData"])
+    new_data.append(value)
+    DARTS_Database["Attitude"]["Plot_TimeData"] = new_data
 
 def Attitude_Plot_Pop_TimeData(index:int=0) -> float:
     _API_Print("Popping Attitude Plot Time Data")
-    return DARTS_Database["Attitude"]["Plot_TimeData"].pop(index)
+    new_data = list(DARTS_Database["Attitude"]["Plot_TimeData"])
+    value = new_data.pop(index)
+    DARTS_Database["Attitude"]["Plot_TimeData"] = new_data
+    return value
 
 def Attitude_Plot_Clear_TimeData() -> None:
     _API_Print("Clearing Attitude Plot Time Data")
-    DARTS_Database["Attitude"]["Plot_TimeData"].clear()
+    DARTS_Database["Attitude"]["Plot_TimeData"] = []
 
 def Attitude_Plot_Get_AttitudeData(type:str="RPY Angles") -> list[float]:
     _API_Print(f"Getting Attitude Plot {type} Data")
@@ -123,41 +128,44 @@ def Attitude_Plot_Push_AttitudeData(value:list[float], type:str="RPY Angles") ->
         gibbs = util.Convert_Quaternion_to_Gibbs(value)
         quat = value
 
+    new_data = dict(DARTS_Database["Attitude"]["Plot_AttitudeData"])
+
     for i in range(3):
 
-        DARTS_Database["Attitude"]["Plot_AttitudeData"]["RPY Angles"][i].append(angles[i])
-        DARTS_Database["Attitude"]["Plot_AttitudeData"]["Euler Parameters"]["axis"][i].append(euler["axis"][i])
-        DARTS_Database["Attitude"]["Plot_AttitudeData"]["Gibbs-Rodriguez"][i].append(gibbs[i])
-        DARTS_Database["Attitude"]["Plot_AttitudeData"]["Quaternion"][i].append(quat[i])
+        new_data["RPY Angles"][i].append(angles[i])
+        new_data["Euler Parameters"]["axis"][i].append(euler["axis"][i])
+        new_data["Gibbs-Rodriguez"][i].append(gibbs[i])
+        new_data["Quaternion"][i].append(quat[i])
 
-    DARTS_Database["Attitude"]["Plot_AttitudeData"]["Euler Parameters"]["angle"].append(euler["angle"])
-    DARTS_Database["Attitude"]["Plot_AttitudeData"]["Quaternion"][3].append(quat[3])
+    new_data["Euler Parameters"]["angle"].append(euler["angle"])
+    new_data["Quaternion"][3].append(quat[3])
+
+    DARTS_Database["Attitude"]["Plot_AttitudeData"] = new_data
 
 def Attitude_Plot_Pop_AttitudeData(index:int=0) -> None:
     _API_Print("Popping Attitude Plot Attitude Data")
 
+    new_data = dict(DARTS_Database["Attitude"]["Plot_AttitudeData"])
+
     for i in range(3):
 
-        DARTS_Database["Attitude"]["Plot_AttitudeData"]["RPY Angles"][i].pop(index)
-        DARTS_Database["Attitude"]["Plot_AttitudeData"]["Euler Parameters"]["axis"][i].pop(index)
-        DARTS_Database["Attitude"]["Plot_AttitudeData"]["Gibbs-Rodriguez"][i].pop(index)
-        DARTS_Database["Attitude"]["Plot_AttitudeData"]["Quaternion"][i].pop(index)
+        new_data["RPY Angles"][i].pop(index)
+        new_data["Euler Parameters"]["axis"][i].pop(index)
+        new_data["Gibbs-Rodriguez"][i].pop(index)
+        new_data["Quaternion"][i].pop(index)
 
-    DARTS_Database["Attitude"]["Plot_AttitudeData"]["Euler Parameters"]["angle"].pop(index)
-    DARTS_Database["Attitude"]["Plot_AttitudeData"]["Quaternion"][3].pop(index)
+    new_data["Euler Parameters"]["angle"].pop(index)
+    new_data["Quaternion"][3].pop(index)
+
+    DARTS_Database["Attitude"]["Plot_AttitudeData"] = new_data
 
 def Attitude_Plot_Clear_AttitudeData() -> None:
     _API_Print("Clearing Attitude Plot Data")
 
-    for i in range(3):
-            
-        DARTS_Database["Attitude"]["Plot_AttitudeData"]["RPY Angles"][i].clear()
-        DARTS_Database["Attitude"]["Plot_AttitudeData"]["Euler Parameters"]["axis"][i].clear()
-        DARTS_Database["Attitude"]["Plot_AttitudeData"]["Gibbs-Rodriguez"][i].clear()
-        DARTS_Database["Attitude"]["Plot_AttitudeData"]["Quaternion"][i].clear()
-
-    DARTS_Database["Attitude"]["Plot_AttitudeData"]["Euler Parameters"]["angle"].clear()
-    DARTS_Database["Attitude"]["Plot_AttitudeData"]["Quaternion"][3].clear()
+    DARTS_Database["Attitude"]["Plot_AttitudeData"] = {"RPY Angles": [[],[],[]],
+                                                       "Euler Parameters": {"axis": [[],[],[]], "angle": []},
+                                                       "Gibbs-Rodriguez": [[],[],[]],
+                                                       "Quaternion": [[],[],[],[]]}
     
 def Attitude_Plot_Get_DisplayType() -> str:
     _API_Print("Getting Attitude Plot Display Type")

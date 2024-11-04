@@ -37,7 +37,7 @@ def DummyAttitude():
     _Process_Print("Pushing Quaternion Data")
     api.Attitude_Plot_Push_AttitudeData(quat_data, type="Quaternion")
 
-    while generation_time - api.Attitude_Plot_Get_StartTime() > api.Attitude_Plot_Get_TimeLength():
+    while generation_time - api.Attitude_Plot_Get_TimeData()[0] > api.Attitude_Plot_Get_TimeLength():
         _Process_Print("Popping Time and Attitude Data")
         api.Attitude_Plot_Pop_TimeData()
         api.Attitude_Plot_Pop_AttitudeData()
