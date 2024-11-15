@@ -56,7 +56,8 @@ class AttitudeRenderingFrame(DARTS_RenderingFrame):
         if _Attitude_Active():
 
             self.draw_attitude_callback()
-            self.after(200, self.draw_attitude_process)
+        
+        self.after(200, self.draw_attitude_process)
 
     def draw_attitude_callback(self):
         _Attitude_Print("Drawing Attitude Callback")
@@ -73,11 +74,12 @@ class AttitudeRenderingFrame(DARTS_RenderingFrame):
 
         self.plot_axes()
 
-        # print(api.Attitude_Get_Current_Type(type="RPY Angles"))
-
+        _Attitude_Print("Plotting Current Attitude")
         self.plot_vector(self.Axes, angles=api.Attitude_Get_Current_Type(type="RPY Angles"), degrees=False, color='c')
+        
         if len(api.Targets_Get_List()) > 0:
-            self.plot_vector(self.Axes, angles=np.rad2deg(util.Convert_Quaternion_to_RPY(api.Targets_Get_List()[0])), color='k')
+            _Attitude_Print("Plotting Current Target")
+            self.plot_vector(self.Axes, angles=util.Convert_Quaternion_to_RPY(api.Targets_Get_List()[0]), degrees=False, color='k')
     
         self.Canvas.draw()
 
