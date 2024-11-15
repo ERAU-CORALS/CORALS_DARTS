@@ -54,10 +54,11 @@ class DARTS_RenderingFrame(CTkFrame):
                       tipHeight=None,
                       tipWidth=None,
                       heightRatio = 0.25,
-                      widthRatio = 0.0625):
+                      widthRatio = 0.0625,
+                      degrees=True):
         _Render_Print(f"Defining New Vector")
 
-        r = R.from_euler("xyz", rotAngles, degrees=True)
+        r = R.from_euler("xyz", rotAngles, degrees=degrees)
         
         def f(y, z, height):
             return np.sqrt(y ** 2 + z ** 2) *-1.0*height
@@ -87,9 +88,9 @@ class DARTS_RenderingFrame(CTkFrame):
 
         return cone_vals,rod_vals
     
-    def plot_vector(self, axes, origin=[0,0,0], angles=[0,0,0], length=1.0, **kwargs):
+    def plot_vector(self, axes, origin=[0,0,0], angles=[0,0,0], length=1.0, degrees=True, **kwargs):
         _Render_Print(f"Plotting Vector")
 
-        cone_vals, rod_vals = self.define_vector(1, origin, angles, length)
+        cone_vals, rod_vals = self.define_vector(1, origin, angles, length, degrees=degrees)
         axes.plot_surface(cone_vals[:,:,0], cone_vals[:,:,1], cone_vals[:,:,2], zorder=3, **kwargs)
         axes.plot3D(rod_vals[:,0]*.9, rod_vals[:,1]*.9, rod_vals[:,2]*.9, zorder=2, **kwargs)

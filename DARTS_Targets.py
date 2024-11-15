@@ -18,6 +18,10 @@ from DARTS_Render import DARTS_RenderingFrame
 def _Targets_Print(value: str): 
     util.Debug_Print(__file__, value, __main__.Environment["DEBUG_TARGETS_PAGE"])
 
+
+def _Targets_Active() -> bool:
+    return __main__.App.MainFrame.MainTabs.get() == "Targets"
+
 class TargetsFrame(CTkFrame):
     def __init__(self, master, **kwargs):
         _Targets_Print("Creating Targets Frame")
@@ -91,6 +95,8 @@ class TargetEntryFrame(CTkFrame):
         _Targets_Print("Creating Target Entry Frame")
 
         super().__init__(master, **kwargs)
+        
+        self.previous_quaternion_type = None
 
         self.TargetEntryLabel = CTkLabel(self, text="Target Entry:")
         self.TargetEntryField = CTkFrame(self)
@@ -123,54 +129,72 @@ class TargetEntryFrame(CTkFrame):
         self.TargetAddFrontButton.place(relx=0, rely=0.5, relwidth=0.5, relheight=0.25, anchor="nw")
         self.TargetAddBackButton.place(relx=1, rely=0.5, relwidth=0.5, relheight=0.25, anchor="ne")
 
+        self.after(2500, self.update_field_labels_process)
+
+    def get_quaternion_entry(self):
+        _Targets_Print("Getting Quaternion Entry")
+
+        if api.Settings_Get_QuaternionType() == "Q0":
+
+            q0 = float(self.TargetEntryField1Box.get("0.0", "end").strip('\n'))
+            q1 = float(self.TargetEntryField2Box.get("0.0", "end").strip('\n'))
+            q2 = float(self.TargetEntryField3Box.get("0.0", "end").strip('\n'))
+            q3 = float(self.TargetEntryField4Box.get("0.0", "end").strip('\n'))
+
+        else:
+
+            q1 = float(self.TargetEntryField1Box.get("0.0", "end").strip('\n'))
+            q2 = float(self.TargetEntryField2Box.get("0.0", "end").strip('\n'))
+            q3 = float(self.TargetEntryField3Box.get("0.0", "end").strip('\n'))
+            q0 = float(self.TargetEntryField4Box.get("0.0", "end").strip('\n'))
+
+        qmag = np.sqrt(q0**2 + q1**2 + q2**2 + q3**2)
+
+        self.TargetEntryField1Box.delete("0.0", "end")
+        self.TargetEntryField2Box.delete("0.0", "end")
+        self.TargetEntryField3Box.delete("0.0", "end")
+        self.TargetEntryField4Box.delete("0.0", "end")
+
+        return [q0, q1, q2, q3] / qmag
+
     def add_front_callback(self):
         _Targets_Print("Adding Target to Front")
 
-        q0 = float(self.TargetEntryField1Box.get("0.0", "end").strip('\n'))
-        q1 = float(self.TargetEntryField2Box.get("0.0", "end").strip('\n'))
-        q2 = float(self.TargetEntryField3Box.get("0.0", "end").strip('\n'))
-        q3 = float(self.TargetEntryField4Box.get("0.0", "end").strip('\n'))
-
-        qmag = np.sqrt(q0**2 + q1**2 + q2**2 + q3**2)
-
-        api.Targets_Get_List().insert(0, [q0, q1, q2, q3] / qmag)
-
-        self.TargetEntryField1Box.delete("0.0", "end")
-        self.TargetEntryField2Box.delete("0.0", "end")
-        self.TargetEntryField3Box.delete("0.0", "end")
-        self.TargetEntryField4Box.delete("0.0", "end")
+        new_data = list(api.Targets_Get_List())
+        new_data.insert(0, self.get_quaternion_entry())
+        api.Targets_Set_List(new_data)
     
     def add_back_callback(self):
         _Targets_Print("Adding Target to Back")
-
-        q0 = float(self.TargetEntryField1Box.get("0.0", "end").strip('\n'))
-        q1 = float(self.TargetEntryField2Box.get("0.0", "end").strip('\n'))
-        q2 = float(self.TargetEntryField3Box.get("0.0", "end").strip('\n'))
-        q3 = float(self.TargetEntryField4Box.get("0.0", "end").strip('\n'))
-
-        qmag = np.sqrt(q0**2 + q1**2 + q2**2 + q3**2)
         
-        api.Targets_Get_List().append([q0, q1, q2, q3] / qmag)
+        new_data = list(api.Targets_Get_List())
+        new_data.append(self.get_quaternion_entry())
+        api.Targets_Set_List(new_data)
 
-        self.TargetEntryField1Box.delete("0.0", "end")
-        self.TargetEntryField2Box.delete("0.0", "end")
-        self.TargetEntryField3Box.delete("0.0", "end")
-        self.TargetEntryField4Box.delete("0.0", "end")
+    def update_field_labels_process(self):
 
-    def update_field_labels(self):
-        if api.Settings_Get_QuaternionType() == "Q0":
-        
-            self.TargetEntryField1Label.configure(text="Q0:")
-            self.TargetEntryField2Label.configure(text="Q1:")
-            self.TargetEntryField3Label.configure(text="Q2:")
-            self.TargetEntryField4Label.configure(text="Q3:")
-        
-        else:
+        if _Targets_Active():
+            self.update_field_labels_callback()
 
-            self.TargetEntryField1Label.configure(text="Q1:")
-            self.TargetEntryField2Label.configure(text="Q2:")
-            self.TargetEntryField3Label.configure(text="Q3:")
-            self.TargetEntryField4Label.configure(text="Q4:")
+        self.after(1000, self.update_field_labels_process)
+
+    def update_field_labels_callback(self):
+        if self.previous_quaternion_type != api.Settings_Get_QuaternionType():
+            self.previous_quaternion_type = api.Settings_Get_QuaternionType()
+            
+            if api.Settings_Get_QuaternionType() == "Q0":
+            
+                self.TargetEntryField1Label.configure(text="Q0:")
+                self.TargetEntryField2Label.configure(text="Q1:")
+                self.TargetEntryField3Label.configure(text="Q2:")
+                self.TargetEntryField4Label.configure(text="Q3:")
+            
+            else:
+
+                self.TargetEntryField1Label.configure(text="Q1:")
+                self.TargetEntryField2Label.configure(text="Q2:")
+                self.TargetEntryField3Label.configure(text="Q3:")
+                self.TargetEntryField4Label.configure(text="Q4:")
 
 class TargetListFrame(CTkFrame):
     class TargetListEntry(CTkFrame):
@@ -194,26 +218,18 @@ class TargetListFrame(CTkFrame):
         def replace_target_callback(self):
             _Targets_Print("Replacing Target")
 
-            q0 = float(self.master.TargetEntry.TargetEntryField1Box.get("0.0", "end").strip('\n'))
-            q1 = float(self.master.TargetEntry.TargetEntryField2Box.get("0.0", "end").strip('\n'))
-            q2 = float(self.master.TargetEntry.TargetEntryField3Box.get("0.0", "end").strip('\n'))
-            q3 = float(self.master.TargetEntry.TargetEntryField4Box.get("0.0", "end").strip('\n'))
-
-            qmag = np.sqrt(q0**2 + q1**2 + q2**2 + q3**2)
-
-            api.Targets_Get_List()[self.TargetIndex] = [q0, q1, q2, q3] / qmag
-
-            self.master.TargetEntry.TargetEntryField1Box.delete("0.0", "end")
-            self.master.TargetEntry.TargetEntryField2Box.delete("0.0", "end")
-            self.master.TargetEntry.TargetEntryField3Box.delete("0.0", "end")
-            self.master.TargetEntry.TargetEntryField4Box.delete("0.0", "end")
+            new_data = list(api.Targets_Get_List())
+            new_data[self.TargetIndex] = self.get_quaternion_entry()
+            api.Targets_Set_List(new_data)
 
             self.master.update_target_list_callback()
 
         def delete_target_callback(self):
             _Targets_Print("Deleting Target")
-
-            api.Targets_Get_List().pop(self.TargetIndex)
+            
+            new_data = list(api.Targets_Get_List())
+            new_data.pop(self.TargetIndex)
+            api.Targets_Set_List(new_data)
             
             self.master.update_target_list_callback()
 
@@ -234,7 +250,7 @@ class TargetListFrame(CTkFrame):
     def update_target_list_process(self):
         _Targets_Print("Updating Target List Process")
         
-        if __main__.App.MainFrame.MainTabs.get() == "Targets":
+        if _Targets_Active():
             self.update_target_list_callback()
 
         self.after(1000, self.update_target_list_process)
@@ -242,9 +258,11 @@ class TargetListFrame(CTkFrame):
     def update_target_list_callback(self):
         _Targets_Print("Updating Target List Process")
 
-        if len(api.Targets_Get_List()) >= len(self.TargetListFrames):
+        target_list_length = len(api.Targets_Get_List())
+
+        if target_list_length >= len(self.TargetListFrames):
             
-            for index in range(len(api.Targets_Get_List())):
+            for index in range(target_list_length):
             
                 if index >= len(self.TargetListFrames):
             
@@ -255,9 +273,9 @@ class TargetListFrame(CTkFrame):
             
                     self.TargetListFrames[index].TargetLabel.configure(text=util.Get_TargetList_Quaternion_String(index))
         
-        elif len(api.Targets_Get_List()) < len(self.TargetListFrames):
+        elif target_list_length < len(self.TargetListFrames):
         
-            for index in range(len(api.Targets_Get_List()), len(self.TargetListFrames)):
+            for index in range(target_list_length, len(self.TargetListFrames)):
         
                 self.TargetListFrames.pop(index).destroy()
 
@@ -287,7 +305,7 @@ class RenderingSettingsFrame(CTkFrame):
         # else:
         #     index = int(entry)
 
-        api.Targets_Set_CurrentDisplayIndices([int(i) for i in self.TargetIndexEntry.get("0.0", "end").strip('[] \n\r').split(',')])
+        api.Targets_Set_CurrentIndices([int(i) for i in self.TargetIndexEntry.get("0.0", "end").strip('[] \n\r').split(',')])
 
         self.TargetIndexEntry.delete("0.0", "end")
         self.TargetIndexEntry.insert("0.0", f"{api.Targets_Get_CurrentIndices()}")

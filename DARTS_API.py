@@ -28,33 +28,37 @@ def Attitude_Get_Current_Type(type:str="RPY Angles") -> list[float]|dict[str, fl
 def Attitude_Set_Current_Type(value:list[float]|dict[str, float], type:str="RPY Angles") -> None:
     _API_Print(f"Setting Attitude Current {type} to {value}")
 
+    new_data = dict(DARTS_Database["Attitude"]["Current"])
+
     if type == "RPY Angles":
 
-        DARTS_Database["Attitude"]["Current"]["RPY Angles"] = value
-        DARTS_Database["Attitude"]["Current"]["Euler Parameters"] = util.Convert_RPY_to_Euler(value)
-        DARTS_Database["Attitude"]["Current"]["Gibbs-Rodriguez"] = util.Convert_RPY_to_Gibbs(value)
-        DARTS_Database["Attitude"]["Current"]["Quaternion"] = util.Convert_RPY_to_Quaternion(value)
+        new_data["RPY Angles"] = value
+        new_data["Euler Parameters"] = util.Convert_RPY_to_Euler(value)
+        new_data["Gibbs-Rodriguez"] = util.Convert_RPY_to_Gibbs(value)
+        new_data["Quaternion"] = util.Convert_RPY_to_Quaternion(value)
 
     elif type == "Euler Parameters":
 
-        DARTS_Database["Attitude"]["Current"]["RPY Angles"] = util.Convert_Euler_to_RPY(value)
-        DARTS_Database["Attitude"]["Current"]["Euler Parameters"] = value
-        DARTS_Database["Attitude"]["Current"]["Gibbs-Rodriguez"] = util.Convert_Euler_to_Gibbs(value)
-        DARTS_Database["Attitude"]["Current"]["Quaternion"] = util.Convert_Euler_to_Quaternion(value)
+        new_data["RPY Angles"] = util.Convert_Euler_to_RPY(value)
+        new_data["Euler Parameters"] = value
+        new_data["Gibbs-Rodriguez"] = util.Convert_Euler_to_Gibbs(value)
+        new_data["Quaternion"] = util.Convert_Euler_to_Quaternion(value)
 
     elif type == "Gibbs-Rodriguez":
 
-        DARTS_Database["Attitude"]["Current"]["RPY Angles"] = util.Convert_Gibbs_to_RPY(value)
-        DARTS_Database["Attitude"]["Current"]["Euler Parameters"] = util.Convert_Gibbs_to_Euler(value)
-        DARTS_Database["Attitude"]["Current"]["Gibbs-Rodriguez"] = value
-        DARTS_Database["Attitude"]["Current"]["Quaternion"] = util.Convert_Gibbs_to_Quaternion(value)
+        new_data["RPY Angles"] = util.Convert_Gibbs_to_RPY(value)
+        new_data["Euler Parameters"] = util.Convert_Gibbs_to_Euler(value)
+        new_data["Gibbs-Rodriguez"] = value
+        new_data["Quaternion"] = util.Convert_Gibbs_to_Quaternion(value)
 
     elif type == "Quaternion":
 
-        DARTS_Database["Attitude"]["Current"]["RPY Angles"] = util.Convert_Quaternion_to_RPY(value)
-        DARTS_Database["Attitude"]["Current"]["Euler Parameters"] = util.Convert_Quaternion_to_Euler(value)
-        DARTS_Database["Attitude"]["Current"]["Gibbs-Rodriguez"] = util.Convert_Quaternion_to_Gibbs(value)
-        DARTS_Database["Attitude"]["Current"]["Quaternion"] = value
+        new_data["RPY Angles"] = util.Convert_Quaternion_to_RPY(value)
+        new_data["Euler Parameters"] = util.Convert_Quaternion_to_Euler(value)
+        new_data["Gibbs-Rodriguez"] = util.Convert_Quaternion_to_Gibbs(value)
+        new_data["Quaternion"] = value
+
+    DARTS_Database["Attitude"]["Current"] = new_data
 
 def Attitude_Plot_Get_StartTime() -> float:
     _API_Print("Getting Attitude Plot Start Time")

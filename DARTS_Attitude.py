@@ -73,7 +73,9 @@ class AttitudeRenderingFrame(DARTS_RenderingFrame):
 
         self.plot_axes()
 
-        self.plot_vector(self.Axes, angles=api.Attitude_Get_Current_Type(type="RPY Angles"), color='c')
+        # print(api.Attitude_Get_Current_Type(type="RPY Angles"))
+
+        self.plot_vector(self.Axes, angles=api.Attitude_Get_Current_Type(type="RPY Angles"), degrees=False, color='c')
         if len(api.Targets_Get_List()) > 0:
             self.plot_vector(self.Axes, angles=np.rad2deg(util.Convert_Quaternion_to_RPY(api.Targets_Get_List()[0])), color='k')
     
