@@ -297,14 +297,6 @@ class RenderingSettingsFrame(CTkFrame):
     def update_target_index_callback(self):
         _Targets_Print("Updating Target Index")
 
-        # entry = self.TargetIndexEntry.get("0.0", "end").strip('[] \n\r').split(',')
-        
-        # if entry[0] == '[' and entry[-1] == ']':
-        #     entries = entry[1:-1].split(',')
-        #     index = [int(e) for e in entry[1:-1].strip(' ').split(',')]
-        # else:
-        #     index = int(entry)
-
         api.Targets_Set_CurrentIndices([int(i) for i in self.TargetIndexEntry.get("0.0", "end").strip('[] \n\r').split(',')])
 
         self.TargetIndexEntry.delete("0.0", "end")
