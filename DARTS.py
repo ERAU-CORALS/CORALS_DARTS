@@ -89,7 +89,7 @@ def DARTS_GUI() -> None:
     DARTS_Environment = manager.dict(load_environment(__main__.Arg_Environment))
 
     DARTS_Database = manager.Database({cat: manager.DatabaseCategory() for cat in 
-                                                ("Attitude", "Target", "Settings")})
+                                                ("Attitude", "Target", "Gains", "Bluetooth", "Settings")})
     DARTS_Database["Attitude"].register \
         ("Current", default={"RPY Angles": [0, 0, 0],
                              "Euler Parameters": {"axis": [0, 0, 0], "angle": 0},
@@ -118,6 +118,55 @@ def DARTS_GUI() -> None:
     DARTS_Database["Target"].register \
         ("Indices", default=[], types=[list])
     
+    DARTS_Database["Gains"].register \
+        ("Matrix", default=[[1, 0, 0], [0, 1, 0], [0, 0, 1]], types=[list])
+    DARTS_Database["Gains"].register \
+        ("Exponent", default=0, types=[int])
+    
+    DARTS_Database["Bluetooth"].register \
+        ("Send_1R", default=False, types=[bool])
+    DARTS_Database["Bluetooth"].register \
+        ("Send_2R", default=False, types=[bool])
+    DARTS_Database["Bluetooth"].register \
+        ("Send_3R", default=False, types=[bool])
+    DARTS_Database["Bluetooth"].register \
+        ("Send_4R", default=False, types=[bool])
+    DARTS_Database["Bluetooth"].register \
+        ("Send_5R", default=False, types=[bool])
+    
+    DARTS_Database["Bluetooth"].register \
+        ("Commanded_Q0", default=0, types=[int, float])
+    DARTS_Database["Bluetooth"].register \
+        ("Commanded_Q1", default=0, types=[int, float])
+    DARTS_Database["Bluetooth"].register \
+        ("Commanded_Q2", default=0, types=[int, float])
+    DARTS_Database["Bluetooth"].register \
+        ("Commanded_Q3", default=1, types=[int, float])
+    DARTS_Database["Bluetooth"].register \
+        ("Target_Type", default="Back", values=["Back", "Front", "Index"], types=[str])
+    DARTS_Database["Bluetooth"].register \
+        ("Target_Action", default="Get", values=["Get", "Add", "Remove", "Replace"], types=[str])
+    DARTS_Database["Bluetooth"].register \
+        ("Target_Index", default=0, types=[int])
+    
+    DARTS_Database["Bluetooth"].register \
+        ("Reported_Q0", default=0, types=[int, float])
+    DARTS_Database["Bluetooth"].register \
+        ("Reported_Q1", default=0, types=[int, float])
+    DARTS_Database["Bluetooth"].register \
+        ("Reported_Q2", default=0, types=[int, float])
+    DARTS_Database["Bluetooth"].register \
+        ("Reported_Q3", default=1, types=[int, float])
+    
+    DARTS_Database["Bluetooth"].register \
+        ("Attitude_Q0", default=0, types=[int, float])
+    DARTS_Database["Bluetooth"].register \
+        ("Attitude_Q1", default=0, types=[int, float])
+    DARTS_Database["Bluetooth"].register \
+        ("Attitude_Q2", default=0, types=[int, float])
+    DARTS_Database["Bluetooth"].register \
+        ("Attitude_Q3", default=1, types=[int, float])
+    
     DARTS_Database["Settings"].register \
         ("Halt", default=True, values=[True, False], types=[bool])
     DARTS_Database["Settings"].register \
@@ -130,9 +179,11 @@ def DARTS_GUI() -> None:
     
     from DARTS_Parallel import DARTS_Process as Process
     from DARTS_Process import DummyAttitudeProcess as AttitudeProcess
+    from DARTS_Bluetooth import BluetoothProcess
 
     processes = {
-        "Attitude": Process(AttitudeProcess, 1000, name="Attitude", Database=DARTS_Database, Environment=DARTS_Environment),
+        "Attitude" : Process(AttitudeProcess, 200, name="Attitude", Database=DARTS_Database, Environment=DARTS_Environment),
+        "Bluetooth" : Process(BluetoothProcess, 200, name="Bluetooth"),
         "Blinky" : Process(Blinky, 1000, name="Blinky"),
     }
 

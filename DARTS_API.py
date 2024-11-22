@@ -203,6 +203,194 @@ def Targets_Set_List(value:list[list[float]]) -> None:
 
 ########################################################################
 #
+# DARTS Gains Settings
+#
+########################################################################
+
+def Gains_Get_Matrix() -> list[list[float]]:
+    _API_Print("Getting Gains Matrix")
+    return DARTS_Database["Gains"]["Matrix"]
+
+def Gains_Set_Matrix(value:list[list[float]]) -> None:
+    _API_Print(f"Setting Gains Matrix to {value}")
+    DARTS_Database["Gains"]["Matrix"] = value
+
+def Gains_Get_Exponent() -> int:
+    _API_Print("Getting Gains Exponent")
+    return DARTS_Database["Gains"]["Exponent"]
+
+def Gains_Set_Exponent(value:int) -> None:
+    _API_Print(f"Setting Gains Exponent to {value}")
+    DARTS_Database["Gains"]["Exponent"] = value
+
+########################################################################
+#
+# DARTS Bluetooth Settings
+#
+########################################################################
+
+def Send_1R_Requested() -> bool:
+    _API_Print("Checking if 1R Data is Requested")
+    return DARTS_Database["Bluetooth"]["Send_1R"]
+
+def Request_Send_1R() -> None:
+    _API_Print("Requesting 1R Data")
+    DARTS_Database["Bluetooth"]["Send_1R"] = True
+
+def Send_2R_Requested() -> bool:
+    _API_Print("Checking if 2R Data is Requested")
+    return DARTS_Database["Bluetooth"]["Send_2R"]
+
+def Request_Send_2R() -> None:
+    _API_Print("Requesting 2R Data")
+    DARTS_Database["Bluetooth"]["Send_2R"] = True
+
+def Send_3R_Requested() -> bool:
+    _API_Print("Checking if 3R Data is Requested")
+    return DARTS_Database["Bluetooth"]["Send_3R"]
+
+def Request_Send_3R() -> None:
+    _API_Print("Requesting 3R Data")
+    DARTS_Database["Bluetooth"]["Send_3R"] = True
+
+def Send_4R_Requested() -> bool:
+    _API_Print("Checking if 4R Data is Requested")
+    return DARTS_Database["Bluetooth"]["Send_4R"]
+
+def Request_Send_4R() -> None:
+    _API_Print("Requesting 4R Data")
+    DARTS_Database["Bluetooth"]["Send_4R"] = True
+
+def Send_5R_Requested() -> bool:
+    _API_Print("Checking if 5R Data is Requested")
+    return DARTS_Database["Bluetooth"]["Send_5R"]
+
+def Request_Send_5R() -> None:
+    _API_Print("Requesting 5R Data")
+    DARTS_Database["Bluetooth"]["Send_5R"] = True
+
+def Get_BLE_Commanded_Q0() -> float:
+    _API_Print("Getting BLE Commanded Q0")
+    return DARTS_Database["Bluetooth"]["Commanded_Q0"]
+
+def Set_BLE_Commanded_Q0(value:float) -> None:
+    _API_Print(f"Setting BLE Commanded Q0 to {value}")
+    DARTS_Database["Bluetooth"]["Commanded_Q0"] = value
+
+def Get_BLE_Commanded_Q1() -> float:
+    _API_Print("Getting BLE Commanded Q1")
+    return DARTS_Database["Bluetooth"]["Commanded_Q1"]
+
+def Set_BLE_Commanded_Q1(value:float) -> None:
+    _API_Print(f"Setting BLE Commanded Q1 to {value}")
+    DARTS_Database["Bluetooth"]["Commanded_Q1"] = value
+
+def Get_BLE_Commanded_Q2() -> float:
+    _API_Print("Getting BLE Commanded Q2")
+    return DARTS_Database["Bluetooth"]["Commanded_Q2"]
+
+def Set_BLE_Commanded_Q2(value:float) -> None:
+    _API_Print(f"Setting BLE Commanded Q2 to {value}")
+    DARTS_Database["Bluetooth"]["Commanded_Q2"] = value
+
+def Get_BLE_Commanded_Q3() -> float:
+    _API_Print("Getting BLE Commanded Q3")
+    return DARTS_Database["Bluetooth"]["Commanded_Q3"]
+
+def Set_BLE_Commanded_Q3(value:float) -> None:
+    _API_Print(f"Setting BLE Commanded Q3 to {value}")
+    DARTS_Database["Bluetooth"]["Commanded_Q3"] = value
+
+def Get_BLE_Target_Type() -> str:
+    _API_Print("Getting BLE Target Type")
+    return DARTS_Database["Bluetooth"]["Target_Type"]
+
+def Set_BLE_Target_Type(value:str) -> None:
+    _API_Print(f"Setting BLE Target Type to {value}")
+    DARTS_Database["Bluetooth"]["Target_Type"] = value
+
+def Get_BLE_Target_Action() -> str:
+    _API_Print("Getting BLE Target Action")
+    return DARTS_Database["Bluetooth"]["Target_Action"]
+
+def Set_BLE_Target_Action(value:str) -> None:
+    _API_Print(f"Setting BLE Target Action to {value}")
+    DARTS_Database["Bluetooth"]["Target_Action"] = value
+
+def Get_BLE_Target_Index() -> int:
+    _API_Print("Getting BLE Target Index")
+    return DARTS_Database["Bluetooth"]["Target_Index"]
+
+def Set_BLE_Target_Index(value:int) -> None:
+    _API_Print(f"Setting BLE Target Index to {value}")
+    DARTS_Database["Bluetooth"]["Target_Index"] = value
+
+def Get_BLE_Reported_Q0() -> float:
+    _API_Print("Getting BLE Reported Q0")
+    return DARTS_Database["Bluetooth"]["Reported_Q0"]
+
+def Set_BLE_Reported_Q0(value:float) -> None:
+    _API_Print(f"Setting BLE Reported Q0 to {value}")
+    DARTS_Database["Bluetooth"]["Reported_Q0"] = value
+
+def Get_BLE_Reported_Q1() -> float:
+    _API_Print("Getting BLE Reported Q1")
+    return DARTS_Database["Bluetooth"]["Reported_Q1"]
+
+def Set_BLE_Reported_Q1(value:float) -> None:
+    _API_Print(f"Setting BLE Reported Q1 to {value}")
+    DARTS_Database["Bluetooth"]["Reported_Q1"] = value
+
+def Get_BLE_Reported_Q2() -> float:
+    _API_Print("Getting BLE Reported Q2")
+    return DARTS_Database["Bluetooth"]["Reported_Q2"]
+
+def Set_BLE_Reported_Q2(value:float) -> None:
+    _API_Print(f"Setting BLE Reported Q2 to {value}")
+    DARTS_Database["Bluetooth"]["Reported_Q2"] = value
+
+def Get_BLE_Reported_Q3() -> float:
+    _API_Print("Getting BLE Reported Q3")
+    return DARTS_Database["Bluetooth"]["Reported_Q3"]
+
+def Set_BLE_Reported_Q3(value:float) -> None:
+    _API_Print(f"Setting BLE Reported Q3 to {value}")
+    DARTS_Database["Bluetooth"]["Reported_Q3"] = value
+
+def Get_BLE_Attitude_Q0() -> float:
+    _API_Print("Getting BLE Attitude Q0")
+    return DARTS_Database["Bluetooth"]["Attitude_Q0"]
+
+def Set_BLE_Attitude_Q0(value:float) -> None:
+    _API_Print(f"Setting BLE Attitude Q0 to {value}")
+    DARTS_Database["Bluetooth"]["Attitude_Q0"] = value
+
+def Get_BLE_Attitude_Q1() -> float:
+    _API_Print("Getting BLE Attitude Q1")
+    return DARTS_Database["Bluetooth"]["Attitude_Q1"]
+
+def Set_BLE_Attitude_Q1(value:float) -> None:
+    _API_Print(f"Setting BLE Attitude Q1 to {value}")
+    DARTS_Database["Bluetooth"]["Attitude_Q1"] = value
+
+def Get_BLE_Attitude_Q2() -> float:
+    _API_Print("Getting BLE Attitude Q2")
+    return DARTS_Database["Bluetooth"]["Attitude_Q2"]
+
+def Set_BLE_Attitude_Q2(value:float) -> None:
+    _API_Print(f"Setting BLE Attitude Q2 to {value}")
+    DARTS_Database["Bluetooth"]["Attitude_Q2"] = value
+
+def Get_BLE_Attitude_Q3() -> float:
+    _API_Print("Getting BLE Attitude Q3")
+    return DARTS_Database["Bluetooth"]["Attitude_Q3"]
+
+def Set_BLE_Attitude_Q3(value:float) -> None:
+    _API_Print(f"Setting BLE Attitude Q3 to {value}")
+    DARTS_Database["Bluetooth"]["Attitude_Q3"] = value
+
+########################################################################
+#
 # DARTS Application Settings
 #
 ########################################################################
