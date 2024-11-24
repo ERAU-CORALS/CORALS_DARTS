@@ -229,45 +229,21 @@ def Gains_Set_Exponent(value:int) -> None:
 #
 ########################################################################
 
-def Send_1R_Requested() -> bool:
-    _API_Print("Checking if 1R Data is Requested")
-    return DARTS_Database["Bluetooth"]["Send_1R"]
+def Get_1RT_Status() -> str:
+    _API_Print("Getting 1RT Status")
+    return DARTS_Database["Bluetooth"]["Status_1RT"]
 
-def Request_Send_1R() -> None:
-    _API_Print("Requesting 1R Data")
-    DARTS_Database["Bluetooth"]["Send_1R"] = True
+def Set_1RT_Status(value:str) -> None:
+    _API_Print(f"Setting 1RT Status to {value}")
+    DARTS_Database["Bluetooth"]["Status_1RT"] = value
 
-def Send_2R_Requested() -> bool:
-    _API_Print("Checking if 2R Data is Requested")
-    return DARTS_Database["Bluetooth"]["Send_2R"]
+def Get_4RT_Status() -> str:
+    _API_Print("Getting 4RT Status")
+    return DARTS_Database["Bluetooth"]["Status_4RT"]
 
-def Request_Send_2R() -> None:
-    _API_Print("Requesting 2R Data")
-    DARTS_Database["Bluetooth"]["Send_2R"] = True
-
-def Send_3R_Requested() -> bool:
-    _API_Print("Checking if 3R Data is Requested")
-    return DARTS_Database["Bluetooth"]["Send_3R"]
-
-def Request_Send_3R() -> None:
-    _API_Print("Requesting 3R Data")
-    DARTS_Database["Bluetooth"]["Send_3R"] = True
-
-def Send_4R_Requested() -> bool:
-    _API_Print("Checking if 4R Data is Requested")
-    return DARTS_Database["Bluetooth"]["Send_4R"]
-
-def Request_Send_4R() -> None:
-    _API_Print("Requesting 4R Data")
-    DARTS_Database["Bluetooth"]["Send_4R"] = True
-
-def Send_5R_Requested() -> bool:
-    _API_Print("Checking if 5R Data is Requested")
-    return DARTS_Database["Bluetooth"]["Send_5R"]
-
-def Request_Send_5R() -> None:
-    _API_Print("Requesting 5R Data")
-    DARTS_Database["Bluetooth"]["Send_5R"] = True
+def Set_4RT_Status(value:str) -> None:
+    _API_Print(f"Setting 4RT Status to {value}")
+    DARTS_Database["Bluetooth"]["Status_4RT"] = value
 
 def Get_BLE_Commanded_Q0() -> float:
     _API_Print("Getting BLE Commanded Q0")
